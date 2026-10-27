@@ -55,3 +55,34 @@ export function formatPercent(value: number | null | undefined, locale = DEFAULT
 export function formatIndex(value: number | null | undefined, locale = DEFAULT_LOCALE): string {
   return formatNumber(value, DISPLAY_DECIMALS, locale);
 }
+
+/** FR-13: why a metric shows "N/A" (used as a tooltip). */
+export const NA_REASONS = {
+  variancePercent: 'Budget is 0, so a percentage variance cannot be calculated.',
+  cpi: 'Actual cost is 0, so CPI (EV ÷ AC) cannot be calculated yet.',
+  spi: 'Planned value is 0 (no work was scheduled by the status date), so SPI (EV ÷ PV) cannot be calculated.',
+  cvPercent: 'Earned value is 0, so CV% cannot be calculated.',
+  svPercent: 'Planned value is 0, so SV% cannot be calculated.',
+  eac: 'CPI is not available or is 0, so this EAC method cannot be calculated.',
+  tcpi: 'Actual cost equals the budget, so there is no budget left to compare against.',
+  bacPercent: 'Total budget (BAC) is 0, so this percentage cannot be calculated.',
+} as const;
+
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com\d|lpt\d)$/i;
+
+/**
+ * Makes a safe file-name stem (FR-43): letters, digits, "_" and "-" only; spaces become "_";
+ * accents are dropped; at most 80 characters. Falls back when nothing is left.
+ */
+export function sanitizeFileName(name: string, fallback = 'file'): string {
+  const cleaned = name
+    .normalize('NFKD')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/[\s-]+/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 80)
+    .replace(/^_+|_+$/g, '');
+  if (cleaned === '') return fallback;
+  return WINDOWS_RESERVED.test(cleaned) ? `${cleaned}_file` : cleaned;
+}

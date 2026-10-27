@@ -1,1 +1,167 @@
 @import 'tailwindcss';
+
+/*
+ * Design tokens — see docs/design-system.md.
+ * Components use only the Tailwind classes mapped below (bg-card, text-muted, …), never hex values.
+ * The dark set is repeated for the system preference and for an explicit data-theme="dark".
+ */
+
+:root {
+  color-scheme: light;
+  --accent: #d4f468;
+  --accent-hover: #c5e84f;
+  --accent-text: #263719;
+  --feature: #183a2b;
+  --feature-text: #f4f5ef;
+  --feature-muted: #b7cdbe;
+  --bg: #f4f5ef;
+  --card: #ffffff;
+  --card-subtle: #f8f9f4;
+  --text: #17241c;
+  --text-muted: #5b685f;
+  --border: #d8ded3;
+  --border-strong: #879483;
+  --success: #3f8f5b;
+  --success-soft: #e3f1e7;
+  --success-strong: #2a6640;
+  --warning: #d9a23a;
+  --warning-soft: #fbf0d9;
+  --warning-strong: #7a5410;
+  --error: #b85450;
+  --error-soft: #f7e3e2;
+  --error-strong: #933b37;
+  --overlay: rgb(16 22 18 / 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --accent: #d4f468;
+    --accent-hover: #e0f88c;
+    --accent-text: #263719;
+    --feature: #1f4733;
+    --feature-text: #f0f4e9;
+    --feature-muted: #b9cbbe;
+    --bg: #101612;
+    --card: #18221b;
+    --card-subtle: #1d2920;
+    --text: #f0f4e9;
+    --text-muted: #a7b3a9;
+    --border: #2e3b32;
+    --border-strong: #6b7a6e;
+    --success: #3f8f5b;
+    --success-soft: #1d3526;
+    --success-strong: #8fd3a6;
+    --warning: #d9a23a;
+    --warning-soft: #3a2f18;
+    --warning-strong: #f0c878;
+    --error: #b85450;
+    --error-soft: #3d2221;
+    --error-strong: #efa19c;
+    --overlay: rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --accent: #d4f468;
+  --accent-hover: #e0f88c;
+  --accent-text: #263719;
+  --feature: #1f4733;
+  --feature-text: #f0f4e9;
+  --feature-muted: #b9cbbe;
+  --bg: #101612;
+  --card: #18221b;
+  --card-subtle: #1d2920;
+  --text: #f0f4e9;
+  --text-muted: #a7b3a9;
+  --border: #2e3b32;
+  --border-strong: #6b7a6e;
+  --success: #3f8f5b;
+  --success-soft: #1d3526;
+  --success-strong: #8fd3a6;
+  --warning: #d9a23a;
+  --warning-soft: #3a2f18;
+  --warning-strong: #f0c878;
+  --error: #b85450;
+  --error-soft: #3d2221;
+  --error-strong: #efa19c;
+  --overlay: rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--accent-text);
+  --color-feature: var(--feature);
+  --color-feature-text: var(--feature-text);
+  --color-feature-muted: var(--feature-muted);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-card-subtle: var(--card-subtle);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-strong: var(--success-strong);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-strong: var(--warning-strong);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+  --color-error-strong: var(--error-strong);
+  --color-overlay: var(--overlay);
+
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --text-page: 36px;
+  --text-page--line-height: 1.15;
+  --text-section: 23px;
+  --text-section--line-height: 1.3;
+  --text-subsection: 18px;
+  --text-subsection--line-height: 1.4;
+  --text-body: 15px;
+  --text-body--line-height: 1.55;
+  --text-control: 14px;
+  --text-control--line-height: 1.4;
+  --text-support: 12px;
+  --text-support--line-height: 1.45;
+  --text-metric: 32px;
+  --text-metric--line-height: 1.1;
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Visible on every background: dark inner ring + lime outer ring. */
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--color-text);
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-text);
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+}

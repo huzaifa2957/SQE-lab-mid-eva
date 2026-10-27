@@ -6,21 +6,26 @@ and tested in `packages/core`; the UI part of the requirement comes in a later p
 
 ## Functional requirements
 
-| Req ID | Description                                 | Test case ID(s)                                | Type | Status      |
-| ------ | ------------------------------------------- | ---------------------------------------------- | ---- | ----------- |
-| FR-01  | Project fields (name, currency, dates)      | UT-VR-09-P, UT-VR-09-F, UT-VR-09-F2, UT-VAL-05 | Unit | Pass (core) |
-| FR-02  | Inline task validation                      | UT-VAL-01, UT-VAL-02, UT-VAL-03                | Unit | Pass (core) |
-| FR-05  | Import preview with per-row errors/warnings | UT-VR-\*, UT-SMP-05, UT-SMP-06                 | Unit | Pass (core) |
-| FR-06  | Tolerant column mapping                     | UT-PAR-13…15, UT-VR-03-P                       | Unit | Pass (core) |
-| FR-10  | Task-level metrics (§4.1)                   | UT-PV-01…12, UT-EVM-01…08b, UT-WE-01           | Unit | Pass (core) |
-| FR-11  | Project-level metrics (§4.2)                | UT-EVM-09…22, UT-WE-02                         | Unit | Pass        |
-| FR-12  | Estimated, actual, variance, % variance     | UT-EVM-01, UT-EVM-02, UT-WE-01, UT-WE-02       | Unit | Pass (core) |
-| FR-13  | Undefined values shown as "N/A"             | UT-FMT-05, UT-WE-03                            | Unit | Pass (core) |
-| FR-14  | Choose primary EAC method                   | UT-EVM-18                                      | Unit | Pass (core) |
-| FR-15  | Recalculate when status date changes        | UT-EVM-23                                      | Unit | Pass (core) |
-| FR-26  | Insights panel (rules §5)                   | UT-IN-00…13, UT-SMP-03                         | Unit | Pass (core) |
-| FR-27  | Overall health badge                        | UT-IN-14, UT-IN-15, UT-SMP-03                  | Unit | Pass (core) |
-| FR-30  | Anomaly detection AN-01…AN-06               | UT-AN-00…08, UT-SMP-03                         | Unit | Pass (core) |
+| Req ID | Description                                 | Test case ID(s)                                         | Type             | Status      |
+| ------ | ------------------------------------------- | ------------------------------------------------------- | ---------------- | ----------- |
+| FR-01  | Create/edit/delete a project                | UT-VR-09-P/F/F2, UT-VAL-05, CT-PRJ-01…03                | Unit + Component | Pass        |
+| FR-02  | Editable task table, inline validation      | UT-VAL-01…03, UT-HLP-04, CT-TASK-02…05                  | Unit + Component | Pass        |
+| FR-03  | Upload .csv / .xlsx (drop or picker)        | UT-XL-02…05, CT-IMP-01…04, CT-IMP-06                    | Unit + Component | Pass        |
+| FR-04  | Download template (.xlsx + tasks .csv)      | UT-XL-01, UT-XL-02, UT-XL-06                            | Unit             | Pass        |
+| FR-05  | Import preview with per-row errors/warnings | UT-VR-\*, UT-SMP-05/06, CT-IMP-01, CT-IMP-02, CT-IMP-05 | Unit + Component | Pass        |
+| FR-06  | Tolerant column mapping                     | UT-PAR-13…15, UT-VR-03-P                                | Unit             | Pass        |
+| FR-07  | "Record status" saves a snapshot            | UT-SNAP-01…03, CT-TASK-07                               | Unit + Component | Pass        |
+| FR-08  | Save/load .evm.json; auto-save locally      | UT-PF-01…06, UT-ST-01/02, CT-PF-01…06, CT-TASK-03       | Unit + Component | Pass        |
+| FR-09  | Load the built-in sample project            | CT-PRJ-04                                               | Component        | Pass        |
+| FR-10  | Task-level metrics (§4.1)                   | UT-PV-01…12, UT-EVM-01…08b, UT-WE-01                    | Unit             | Pass (core) |
+| FR-11  | Project-level metrics (§4.2)                | UT-EVM-09…22, UT-WE-02                                  | Unit             | Pass        |
+| FR-12  | Estimated, actual, variance, % variance     | UT-EVM-01/02, UT-WE-01/02, CT-TASK-01                   | Unit + Component | Pass        |
+| FR-13  | Undefined values shown as "N/A" + reason    | UT-FMT-05, UT-WE-03, CT-TASK-09                         | Unit + Component | Pass        |
+| FR-14  | Choose primary EAC method                   | UT-EVM-18 (UI: Settings page)                           | Unit             | Pass (core) |
+| FR-15  | Recalculate when status date changes        | UT-EVM-23, CT-TASK-06                                   | Unit + Component | Pass        |
+| FR-26  | Insights panel (rules §5)                   | UT-IN-00…13, UT-SMP-03                                  | Unit             | Pass (core) |
+| FR-27  | Overall health badge                        | UT-IN-14, UT-IN-15, UT-SMP-03                           | Unit             | Pass (core) |
+| FR-30  | Anomaly detection AN-01…AN-06               | UT-AN-00…08, UT-SMP-03                                  | Unit             | Pass (core) |
 
 ## Insight rules (§5)
 
@@ -73,14 +78,18 @@ and tested in `packages/core`; the UI part of the requirement comes in a later p
 
 ## Non-functional and security
 
-| Req ID | Description                                    | Test case ID(s)                                 | Type   | Status      |
-| ------ | ---------------------------------------------- | ----------------------------------------------- | ------ | ----------- |
-| RL-01  | Core returns null, never NaN/Infinity          | UT-EVM-08b, UT-EVM-19, UT-FMT-05                | Unit   | Pass        |
-| RL-02  | Parse errors are user-readable with row/column | UT-SMP-06, UT-VR-\*-F                           | Unit   | Pass (core) |
-| NF-04  | Core ≥ 90% line coverage                       | `npm run test:coverage` (threshold enforced)    | Static | Pass        |
-| NF-05  | ESLint + Prettier pass in CI; TS strict        | CI `lint`, `format:check`, `typecheck`          | Static | Pass        |
-| NF-05  | No `any` in `packages/core`                    | ESLint `no-explicit-any` (core)                 | Static | Pass        |
-| SR-01  | `.env` git-ignored; `.env.example` committed   | Manual review of `.gitignore`                   | Manual | Pass        |
-| SR-03  | No `dangerouslySetInnerHTML`                   | ESLint `no-restricted-syntax` (web)             | Static | Pass        |
-| SR-04  | Formula-injection text detected on import      | UT-PAR-18, UT-SMP-08 (export escaping: Phase 6) | Unit   | Partial     |
-| SR-07  | `npm audit` clean of high/critical; Dependabot | CI `npm audit --audit-level=high`               | Static | Pass        |
+| Req ID | Description                                                       | Test case ID(s)                                                                  | Type             | Status  |
+| ------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------- | ------- |
+| RL-01  | Core returns null, never NaN/Infinity                             | UT-EVM-08b, UT-EVM-19, UT-FMT-05                                                 | Unit             | Pass    |
+| RL-02  | Parse errors are user-readable with row/column                    | UT-SMP-06, UT-VR-\*-F, CT-IMP-02…04, CT-PF-03/04                                 | Unit + Component | Pass    |
+| RL-03  | Error boundary with Reload / Export data                          | CT-ERR-01                                                                        | Component        | Pass    |
+| RL-04  | Confirm + undo before replacing data                              | CT-IMP-01, CT-PF-05, CT-PRJ-03, CT-TASK-04, CT-TASK-07                           | Component        | Pass    |
+| NF-03  | Labels, keyboard use, focus ring, icon + colour; WCAG AA contrast | CT-CON-\* (44 checks), CT-TASK-02/05, CT-THEME-\*                                | Component        | Pass    |
+| NF-04  | Core ≥ 90% line coverage; overall ≥ 70%                           | `npm run test:coverage` (thresholds enforced)                                    | Static           | Pass    |
+| NF-05  | ESLint + Prettier pass in CI; TS strict                           | CI `lint`, `format:check`, `typecheck`                                           | Static           | Pass    |
+| NF-05  | No `any` in `packages/core`                                       | ESLint `no-explicit-any` (core)                                                  | Static           | Pass    |
+| SR-01  | `.env` git-ignored; `.env.example` committed                      | Manual review of `.gitignore`                                                    | Manual           | Pass    |
+| SR-03  | No `dangerouslySetInnerHTML`; user text as plain text             | ESLint `no-restricted-syntax` (web), UT-XL-03, UT-SMP-08                         | Static + Unit    | Pass    |
+| SR-05  | Content-Security-Policy meta tag in the build                     | Manual: `dist/index.html` contains the CSP; ExcelJS chunk checked for eval paths | Manual           | Pass    |
+| SR-04  | Formula-injection text detected on import                         | UT-PAR-18, UT-SMP-08 (export escaping: Phase 6)                                  | Unit             | Partial |
+| SR-07  | `npm audit` clean of high/critical; Dependabot                    | CI `npm audit --audit-level=high`                                                | Static           | Pass    |

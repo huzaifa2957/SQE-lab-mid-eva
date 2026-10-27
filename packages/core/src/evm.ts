@@ -87,6 +87,18 @@ export function schedulePerformanceIndex(ev: MetricValue, pv: MetricValue): Metr
   return safeDivide(ev, pv);
 }
 
+export type VarianceStatus = 'favourable' | 'neutral' | 'unfavourable';
+
+/**
+ * Direction of a variance where positive is good (simple variance, CV, SV, VAC):
+ * > 0 favourable, 0 neutral, < 0 unfavourable, null when unknown.
+ */
+export function classifyVariance(value: MetricValue): VarianceStatus | null {
+  if (value === null) return null;
+  if (value > 0) return 'favourable';
+  return value < 0 ? 'unfavourable' : 'neutral';
+}
+
 /** All §4.1 metrics for one task as of the status date. */
 export function computeTaskMetrics(task: Task, statusDate: string): TaskMetrics {
   const budget = finiteOrNull(task.budget);

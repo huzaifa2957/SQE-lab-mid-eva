@@ -22,6 +22,16 @@ npm install
 npm run dev -w apps/web     # http://localhost:5173
 ```
 
+To try the production build (with the Content-Security-Policy applied):
+
+```sh
+npm run build -w apps/web
+npm run preview -w apps/web # http://localhost:4173
+```
+
+Data is stored in the browser (IndexedDB). Use **Save project file** to keep a portable
+`.evm.json` copy. UI rules are in [docs/design-system.md](docs/design-system.md).
+
 ## Scripts
 
 | Command                     | What it does                            |

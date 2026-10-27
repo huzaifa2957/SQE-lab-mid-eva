@@ -15,6 +15,7 @@ Earned Value Management cost tracker: web app (React + Vite, static, hosted on R
 
 ## Rules
 - All business logic (formulas, validation, insights, anomalies) goes in `packages/core` as pure, tested functions. UI code never re-implements a formula.
+- All UI, charts and reports must follow docs/design-system.md.
 - Math functions return `number | null`; never `NaN`/`Infinity`. Display `null` as "N/A" with a reason tooltip.
 - Round only at display time.
 - Every new rule or formula gets tests for both the passing and failing case.

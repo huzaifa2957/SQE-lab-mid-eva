@@ -44,7 +44,10 @@ export type IssueSeverity = 'error' | 'warning';
 export interface ValidationIssue {
   ruleId: string;
   severity: IssueSeverity;
+  /** Full message including the location, e.g. "Row 3, 'Budget': value -5 must be …". */
   message: string;
+  /** The message without the row/column prefix, for display next to a form field. */
+  detail?: string;
   row?: number;
   column?: string;
 }
@@ -72,11 +75,23 @@ class Issues {
   readonly warnings: ValidationIssue[] = [];
 
   error(ruleId: string, text: string, loc: Location = {}): void {
-    this.errors.push({ ruleId, severity: 'error', message: locate(loc, text), ...loc });
+    this.errors.push({
+      ruleId,
+      severity: 'error',
+      message: locate(loc, text),
+      detail: text,
+      ...loc,
+    });
   }
 
   warning(ruleId: string, text: string, loc: Location = {}): void {
-    this.warnings.push({ ruleId, severity: 'warning', message: locate(loc, text), ...loc });
+    this.warnings.push({
+      ruleId,
+      severity: 'warning',
+      message: locate(loc, text),
+      detail: text,
+      ...loc,
+    });
   }
 
   get hasErrors(): boolean {
@@ -465,6 +480,7 @@ function checkHeaders<F extends string>(mapping: HeaderMapping<F>, issues: Issue
       ruleId: 'VR-03',
       severity: 'error',
       message: `Missing required column '${spec.label}'.`,
+      detail: 'required column is missing',
       column: spec.label,
     });
   }
@@ -596,6 +612,25 @@ function checkTask(candidate: unknown, ctx: TaskContext, issues: Issues): Task |
   return parsed.data;
 }
 
+/**
+ * For a row where some cells could not be parsed: still apply the schema rules (ranges,
+ * lengths) to the cells that did parse, so every problem in the row is listed at once.
+ */
+function reportParsedFieldIssues(
+  candidate: Record<string, unknown>,
+  ctx: TaskContext,
+  issues: Issues,
+): void {
+  const parsed = TaskSchema.safeParse(candidate);
+  if (parsed.success) return;
+  const relevant = parsed.error.issues.filter(
+    (issue) => issue.path.length > 0 && candidate[String(issue.path[0])] !== undefined,
+  );
+  if (relevant.length > 0) {
+    addZodIssues(new z.ZodError(relevant), TASK_RULES, issues, ctx.locate, ctx.raw);
+  }
+}
+
 /** VR-04 duplicate check. Returns false (and reports) when the ID was already used. */
 function claimId(
   seen: Map<string, number | undefined>,
@@ -722,9 +757,17 @@ export function validateTaskRows(
   checkHeaders(mapping, issues);
   if (issues.hasErrors) return done([], rows.length);
 
-  // Pass 1: parse every cell.
+  // Pass 1: parse every cell and check for duplicate IDs (VR-04), so a row with several
+  // problems reports all of them at once.
+  const seen = new Map<string, number | undefined>();
   const parsedRows = rows.map((sheetRow) => {
     const reader = new RowReader(sheetRow, mapping, TASK_LABELS, TASK_RULES, issues);
+    const ctx: TaskContext = {
+      row: sheetRow.row,
+      locate: (field) => reader.loc(field),
+      raw: (field) => reader.raw(field),
+      project: options.project,
+    };
     const fields = {
       id: reader.text('id'),
       name: reader.text('name'),
@@ -735,7 +778,8 @@ export function validateTaskRows(
       percent: reader.percent('percentComplete'),
       actualCost: reader.number('actualCost'),
     };
-    return { reader, sheetRow, fields };
+    const duplicate = fields.id !== '' && !claimId(seen, fields.id, ctx, issues);
+    return { reader, ctx, fields, duplicate };
   });
 
   // VR-07: decide how to scale % Complete.
@@ -754,20 +798,18 @@ export function validateTaskRows(
       ? p.value
       : Number((p.value * 100).toPrecision(12));
 
-  // Pass 2: business rules on rows that parsed cleanly.
-  const seen = new Map<string, number | undefined>();
+  // Pass 2: business rules on rows that parsed cleanly. Duplicate rows are still checked
+  // (so all their problems are listed) but never imported.
   const tasks: Task[] = [];
-  for (const { reader, sheetRow, fields } of parsedRows) {
-    if (reader.failed) continue;
-    const ctx: TaskContext = {
-      row: sheetRow.row,
-      locate: (field) => reader.loc(field),
-      raw: (field) => reader.raw(field),
-      project: options.project,
-    };
+  for (const { reader, ctx, fields, duplicate } of parsedRows) {
     const { percent, ...rest } = fields;
-    const task = checkTask({ ...rest, percentComplete: scale(percent!) }, ctx, issues);
-    if (task && claimId(seen, task.id, ctx, issues)) tasks.push(task);
+    const candidate = { ...rest, percentComplete: percent ? scale(percent) : undefined };
+    if (reader.failed) {
+      reportParsedFieldIssues(candidate, ctx, issues);
+      continue;
+    }
+    const task = checkTask(candidate, ctx, issues);
+    if (task && !duplicate) tasks.push(task);
   }
 
   if (!issues.hasErrors) checkBac(tasks, issues);
@@ -962,5 +1004,55 @@ export function parseProjectRecord(
 
   const parsed = ProjectInputSchema.safeParse(candidate);
   if (!parsed.success) addZodIssues(parsed.error, PROJECT_RULES, issues, loc, raw);
+  return { ...issues.result(), project: parsed.success ? parsed.data : null };
+}
+
+/**
+ * Reads a Project sheet in either layout:
+ * - a header row (Name, Currency, Start Date, …) with the values in the next row, or
+ * - label/value pairs, one per row (Name | Clinic …).
+ */
+export function parseProjectSheet(
+  sheet: SheetData,
+): ValidationResult & { project: ProjectInput | null } {
+  const headers = sheet.headers.map((header) => sanitizeText(header).value);
+  const matched = PROJECT_COLUMNS.length - mapHeaders(headers, PROJECT_COLUMNS).missing.length;
+  if (matched >= 2) {
+    const values = sheet.rows.find((cells) => !cells.every(isBlank)) ?? [];
+    return parseProjectRecord(Object.fromEntries(headers.map((header, i) => [header, values[i]])));
+  }
+  const pairs = [sheet.headers, ...sheet.rows]
+    .filter((cells) => !isBlank(cells[0]))
+    .map((cells) => [sanitizeText(cells[0]).value, cells[1]] as const);
+  return parseProjectRecord(Object.fromEntries(pairs));
+}
+
+const FULL_PROJECT_RULES: Record<string, string> = {
+  ...PROJECT_RULES,
+  id: 'FR-08',
+  bac: 'FR-08',
+  createdAt: 'FR-08',
+  updatedAt: 'FR-08',
+};
+
+/** Validates a complete stored project (id and timestamps included), e.g. from a .evm.json file. */
+export function validateFullProject(
+  input: unknown,
+): ValidationResult & { project: Project | null } {
+  const issues = new Issues();
+  const record = (typeof input === 'object' && input !== null ? input : {}) as Record<
+    string,
+    unknown
+  >;
+  const parsed = ProjectSchema.safeParse(input);
+  if (!parsed.success) {
+    addZodIssues(
+      parsed.error,
+      FULL_PROJECT_RULES,
+      issues,
+      (field) => ({ column: PROJECT_LABELS[field as ProjectField] ?? field }),
+      (field) => record[field],
+    );
+  }
   return { ...issues.result(), project: parsed.success ? parsed.data : null };
 }

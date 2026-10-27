@@ -211,3 +211,32 @@ Pass/fail coverage for every VR, IN and AN rule is listed in [traceability.md](t
 | VR-16                   | Formula-like text (`= + - @`) and HTML are **kept literally** with a warning, not rejected; escaping happens on export (SR-04, Phase 6).                                                                                                    | `validation.ts` |
 | Project name / currency | No VR rule covers these, so their issues use rule ID `FR-01`.                                                                                                                                                                               | `validation.ts` |
 | Numbers                 | Only `Rs` or an upper-case 3-letter code is stripped as currency, so `12abc` is rejected.                                                                                                                                                   | `parsers.ts`    |
+
+# Test cases — web UI: data entry and import (Phase 3)
+
+Component tests (Vitest + Testing Library, jsdom) live in `apps/web/src/test/`. They render the
+whole app with an in-memory store, so they exercise the real pages, the core validators and the
+auto-save path together.
+
+| ID                            | File                                      | What it checks                                                                                                           |
+| ----------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| CT-TASK-01                    | `taskTable.test.tsx`                      | Per-task and total estimated / actual / variance / % variance match core                                                 |
+| CT-TASK-02                    | `taskTable.test.tsx`                      | Duplicate ID, `"abc"` budget and 120% shown next to their fields; not saved                                              |
+| CT-TASK-03                    | `taskTable.test.tsx`                      | Corrected row saves, `Rs 20,000` accepted, totals update, auto-saved                                                     |
+| CT-TASK-04/05                 | `taskTable.test.tsx`                      | Edit, delete + undo, Esc cancels                                                                                         |
+| CT-TASK-06                    | `taskTable.test.tsx`                      | Status date change recalculates; date before start shows the VR-09 message                                               |
+| CT-TASK-07                    | `taskTable.test.tsx`                      | Record status; same date asks to replace                                                                                 |
+| CT-TASK-08/09                 | `taskTable.test.tsx`                      | No-project state; N/A has a reason tooltip                                                                               |
+| CT-IMP-01                     | `importPreview.test.tsx`                  | `samples/sample_project.csv`: 0 errors, 1 warning row tinted amber, confirm + undo                                       |
+| CT-IMP-02                     | `importPreview.test.tsx`                  | `samples/invalid_percent_over_100.csv`: exact message, row tinted red, Import disabled                                   |
+| CT-IMP-03/04                  | `importPreview.test.tsx`                  | `.txt` rejected (VR-01); corrupt `.xlsx` gives a readable error                                                          |
+| CT-IMP-05                     | `importPreview.test.tsx`                  | Fraction-like % values need confirmation, then convert to 50%                                                            |
+| CT-IMP-06                     | `importPreview.test.tsx`                  | Import into an empty project needs no confirmation                                                                       |
+| CT-PF-01…06                   | `projectFile.test.tsx`                    | Save `.evm.json` → core reads it back; open valid / invalid / non-JSON files; replace + undo; damaged local data skipped |
+| CT-PRJ-01…05                  | `projects.test.tsx`                       | Create (with validation), edit, delete (confirm + undo), sample project, navigation                                      |
+| CT-THEME-01…04                | `theme.test.tsx`                          | System default, toggle + remembered, back to System, blocked localStorage                                                |
+| CT-ERR-01                     | `errorBoundary.test.tsx`                  | Friendly fallback, no technical detail, Export data downloads a backup                                                   |
+| CT-CON-\*                     | `contrast.test.ts`                        | WCAG AA: 18 text pairs ≥ 4.5:1 and 3 UI pairs ≥ 3:1, in both themes                                                      |
+| UT-XL-01…06                   | `excel.test.ts`                           | Template sheets/headers; template imports cleanly; typed cells, formulas (result only), rich text; CSV template          |
+| UT-ST-01/02                   | `storage.test.ts`                         | Dexie save/list/replace/remove (fake-indexeddb); preferences never throw                                                 |
+| UT-SNAP, UT-PF, UT-PS, UT-HLP | `packages/core/tests/phase3-core.test.ts` | Snapshots, project-file format, Project sheet layouts, helpers                                                           |

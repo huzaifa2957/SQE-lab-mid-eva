@@ -21,6 +21,9 @@
     "test:coverage": "vitest run --coverage",
     "build": "npm run build --workspaces --if-present"
   },
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@vitest/coverage-v8": "^4.1.12",
