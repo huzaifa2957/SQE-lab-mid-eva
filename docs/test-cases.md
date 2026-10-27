@@ -158,3 +158,56 @@ project.
 | UT-FMT-05 | null / undefined / NaN / ±Infinity   | `N/A`                           |
 | UT-FMT-06 | Tiny negatives                       | no `-0.00`                      |
 | UT-FMT-07 | Formatting does not change the value | display-only rounding           |
+
+# Test cases — validation, insights, anomalies (Phase 2)
+
+Pass/fail coverage for every VR, IN and AN rule is listed in [traceability.md](traceability.md).
+
+## 4. Conventions
+
+- **Row numbers** are spreadsheet rows: the header is row 1, the first data row is row 2. Blank rows
+  are skipped (VR-15) but still counted, so a message's row matches what the user sees in Excel.
+- **Message format:** `Row <n>, '<column as written in the file>': value <v> <problem>` — numbers
+  and dates are shown bare, text in quotes. Example: `Row 3, '% Complete': value 120 must be between 0 and 100`.
+- **Errors** set `valid: false` and the row is left out of `tasks`; **warnings** never block import.
+- Issues are sorted by row; file-level issues (missing column, empty file) come first.
+
+## 5. Parsers — `tests/parsers.test.ts`
+
+| ID        | Case                                                                             |
+| --------- | -------------------------------------------------------------------------------- |
+| UT-PAR-01 | Plain numbers / numeric strings                                                  |
+| UT-PAR-02 | `1,200`, `Rs 1200`, `Rs. 1,200`, `$1,200.50`, `PKR 1,234,567`, `1200 USD`, `€99` |
+| UT-PAR-03 | Negatives `-500`, `-$1,200`, `$-1,200`, `(500)`                                  |
+| UT-PAR-04 | Rejects `abc`, `12abc`, `1,20`, `1.2.3`, `1e5`, `--5`, `(-5)`, NaN, Infinity     |
+| UT-PAR-05 | Blank → "is required"                                                            |
+| UT-PAR-06 | `45%`, `45`, `0.45` (percent sign recorded)                                      |
+| UT-PAR-07 | Non-numeric percent rejected                                                     |
+| UT-PAR-08 | Fraction detection: all ≤ 1 and one > 0, no `%` sign                             |
+| UT-PAR-09 | `YYYY-MM-DD` (with time, single-digit parts)                                     |
+| UT-PAR-10 | `DD/MM/YYYY`, `DD-MM-YYYY`, `DD.MM.YYYY`                                         |
+| UT-PAR-11 | Excel serials (number or text) and `Date` objects                                |
+| UT-PAR-12 | Impossible / ambiguous / out-of-range dates rejected                             |
+| UT-PAR-13 | Header normalisation (case, spaces, `_`, `-`, BOM)                               |
+| UT-PAR-14 | Header mapping: missing, duplicate, unknown columns                              |
+| UT-PAR-15 | Aliases                                                                          |
+| UT-PAR-16 | Control characters, line breaks, bidi overrides removed                          |
+| UT-PAR-17 | Length limit                                                                     |
+| UT-PAR-18 | HTML/formulas kept literal; formula prefixes `= + - @ \t` detected               |
+| UT-PAR-19 | `isBlank`                                                                        |
+
+## 6. Design decisions to review
+
+| Topic                   | Decision                                                                                                                                                                                                                                    | Where           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| AN-01 "cost-variance %" | Uses task **CV% = CV / EV × 100** (cost efficiency of work done), not the simple budget variance %, which would flag every unstarted task as +100%. Tasks with EV = 0 are skipped.                                                          | `anomalies.ts`  |
+| AN-01 statistics        | Population standard deviation (the tasks are the whole population). With exactly 5 tasks the largest possible \|z\| is 2.0, so the z-rule effectively needs 6+ tasks to fire. IQR uses Excel QUARTILE.INC interpolation and needs 3+ tasks. | `anomalies.ts`  |
+| AN-01 severity          | Overrun-side outliers are `high`, under-run side `low`.                                                                                                                                                                                     | `anomalies.ts`  |
+| AN-04                   | Increases are between consecutive snapshots only (not from 0 to the first). Needs at least 3 increases (4 snapshots); "more than 2×" is strict.                                                                                             | `anomalies.ts`  |
+| IN-10                   | Red when VAC% ≤ −10%, amber for a smaller overrun (`vacRedPercent` threshold).                                                                                                                                                              | `insights.ts`   |
+| IN-11                   | "Falling for 3 consecutive snapshots" = CPI dropped in each of the last **3 steps** (needs 4 snapshots). A flat step breaks the run.                                                                                                        | `insights.ts`   |
+| FR-27                   | Health = worst non-info status; `null` when neither CPI nor SPI is available.                                                                                                                                                               | `insights.ts`   |
+| VR-07                   | Without confirmation, fraction-looking values are read as-is (0.45 = 0.45%) and a warning + `percentFractionSuspected` asks the UI to confirm; `percentAsFraction: true` multiplies by 100.                                                 | `validation.ts` |
+| VR-16                   | Formula-like text (`= + - @`) and HTML are **kept literally** with a warning, not rejected; escaping happens on export (SR-04, Phase 6).                                                                                                    | `validation.ts` |
+| Project name / currency | No VR rule covers these, so their issues use rule ID `FR-01`.                                                                                                                                                                               | `validation.ts` |
+| Numbers                 | Only `Rs` or an upper-case 3-letter code is stripped as currency, so `12abc` is rejected.                                                                                                                                                   | `parsers.ts`    |
