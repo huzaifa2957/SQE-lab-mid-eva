@@ -21,12 +21,11 @@ import { Card, FeaturePanel } from '../../components/ui/Card';
 import { cx } from '../../components/ui/cx';
 import { ConfirmDialog, Modal } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
-import { errorMessage } from '../../lib/files';
-import { defaultProjectInput, newId, nowIso } from '../../lib/ids';
-import { buildSampleDocument } from '../../lib/sampleProject';
-import type { PageId } from '../../state/navigation';
+import { defaultProjectInput } from '../../lib/ids';
+import type { Navigate, PageParams } from '../../state/navigation';
 import { useProjects } from '../../state/ProjectStore';
 import { useToast } from '../../state/ToastProvider';
+import { useLoadSample } from '../../state/useLoadSample';
 import { useProjectFiles } from '../../state/useProjectFiles';
 import { ProjectFormModal } from './ProjectFormModal';
 
@@ -40,27 +39,23 @@ const inputFromDocument = ({ project }: ProjectDocument): ProjectInput => ({
   statusDate: project.statusDate,
 });
 
-export function ProjectsPage({ onNavigate }: { onNavigate: (page: PageId) => void }) {
+export function ProjectsPage({
+  onNavigate,
+  params = {},
+}: {
+  onNavigate: Navigate;
+  params?: PageParams;
+}) {
   const store = useProjects();
   const toast = useToast();
   const files = useProjectFiles();
+  const loadSample = useLoadSample();
   const fileInput = useRef<HTMLInputElement>(null);
-  const [form, setForm] = useState<FormState>(null);
+  // "Create project" from other pages arrives as #/projects?new=1
+  const [form, setForm] = useState<FormState>(() =>
+    params.new === '1' ? { mode: 'create' } : null,
+  );
   const [toDelete, setToDelete] = useState<ProjectDocument | null>(null);
-
-  const loadSample = () => {
-    try {
-      const sample = buildSampleDocument(newId(), nowIso());
-      store.putDocument(sample);
-      toast({ tone: 'success', title: 'Sample project loaded', description: sample.project.name });
-    } catch (error) {
-      toast({
-        tone: 'error',
-        title: 'Could not load the sample project',
-        description: errorMessage(error),
-      });
-    }
-  };
 
   const submitForm = (input: ProjectInput) => {
     if (form?.mode === 'edit') {

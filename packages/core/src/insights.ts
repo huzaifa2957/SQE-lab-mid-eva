@@ -220,3 +220,91 @@ export function overallHealth(insights: readonly Insight[]): HealthStatus | null
   if (statuses.includes('amber')) return 'amber';
   return statuses.length > 0 ? 'green' : null;
 }
+
+// ---------------------------------------------------------------------------
+// KPI statuses (FR-25), ordering and tips (FR-26)
+// ---------------------------------------------------------------------------
+
+export type KpiId = 'cpi' | 'spi' | 'cv' | 'sv' | 'eac' | 'vac' | 'tcpi' | 'percentComplete';
+
+function indexBand(value: MetricValue, t: InsightThresholds): HealthStatus | null {
+  if (value === null) return null;
+  if (value >= t.indexOnTarget) return 'green';
+  return value >= t.indexWarning ? 'amber' : 'red';
+}
+
+/**
+ * Colour for each KPI card, using the same §5 thresholds as the insights:
+ * - CPI, SPI: IN-01…IN-06 bands. CV follows CPI and SV follows SPI (CV < 0 ⇔ CPI < 1).
+ * - EAC, VAC: IN-10 — green when VAC ≥ 0, red when VAC% ≤ −10%, otherwise amber.
+ * - TCPI: green ≤ 1.00, amber ≤ 1.10, red above (IN-09).
+ * - % complete is informational (null).
+ */
+export function kpiStatuses(
+  metrics: ProjectMetrics,
+  thresholds: Partial<InsightThresholds> = {},
+): Record<KpiId, HealthStatus | null> {
+  const t: InsightThresholds = { ...DEFAULT_INSIGHT_THRESHOLDS, ...thresholds };
+  const cpi = indexBand(metrics.cpi, t);
+  const spi = indexBand(metrics.spi, t);
+  const vac =
+    metrics.vac === null
+      ? null
+      : metrics.vac >= 0
+        ? 'green'
+        : metrics.vacPercent !== null && metrics.vacPercent <= t.vacRedPercent
+          ? 'red'
+          : 'amber';
+  const tcpi =
+    metrics.tcpi === null
+      ? null
+      : metrics.tcpi <= t.indexOnTarget
+        ? 'green'
+        : metrics.tcpi <= t.tcpiUnrealistic
+          ? 'amber'
+          : 'red';
+  return {
+    cpi,
+    spi,
+    cv: metrics.cv === null ? null : cpi,
+    sv: metrics.sv === null ? null : spi,
+    eac: vac,
+    vac,
+    tcpi,
+    percentComplete: null,
+  };
+}
+
+const STATUS_ORDER: Record<InsightStatus, number> = { red: 0, amber: 1, info: 2, green: 3 };
+
+/** Red first, then amber, info and green; rule order is kept within a status. */
+export function sortInsights(insights: readonly Insight[]): Insight[] {
+  return [...insights].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+}
+
+/** The single most important insight (for the dashboard headline), or null. */
+export function headlineInsight(insights: readonly Insight[]): Insight | null {
+  return sortInsights(insights)[0] ?? null;
+}
+
+/** A short "what to do" tip for each rule (FR-26). */
+export const INSIGHT_TIPS: Readonly<Record<string, string>> = Object.freeze({
+  'IN-01': 'Keep current cost controls in place and record status regularly to confirm the trend.',
+  'IN-02': 'Review the tasks with negative CV and check rates, quantities and scope changes early.',
+  'IN-03':
+    'Hold a cost review now: find the overrunning tasks, cut non-essential spend and agree corrective actions.',
+  'IN-04': 'Protect the schedule: check upcoming dependencies and resource availability.',
+  'IN-05':
+    'Look at the tasks that are behind plan and whether extra resources or re-sequencing can help.',
+  'IN-06':
+    'Re-plan the critical work: add resources, fast-track tasks or agree a revised schedule.',
+  'IN-07':
+    'Spending looks low only because work is late. Focus on catching up progress, not on the savings.',
+  'IN-08':
+    'The schedule is being kept by spending more. Check overtime, expediting and premium costs.',
+  'IN-09':
+    'Finishing on budget is unlikely. Agree a new budget (re-baseline) using the EAC with stakeholders.',
+  'IN-10': 'Report the forecast overrun to stakeholders and plan how it will be funded or reduced.',
+  'IN-11': 'Find out what changed in recent periods before the trend becomes a large overrun.',
+  'IN-12': 'Start with these tasks: they explain most of the overrun.',
+});

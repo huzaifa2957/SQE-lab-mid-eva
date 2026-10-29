@@ -76,7 +76,7 @@ describe('Data page task table (FR-02, FR-12, FR-15)', () => {
   it('CT-TASK-04 editing and deleting with undo', async () => {
     const { user } = await renderApp();
     await user.click(screen.getByRole('button', { name: 'Edit task 1.2' }));
-    const actual = screen.getByLabelText('Actual cost');
+    const actual = screen.getByRole('textbox', { name: 'Actual cost' });
     await user.clear(actual);
     await user.type(actual, '90000');
     await user.click(screen.getByRole('button', { name: 'Save task' }));

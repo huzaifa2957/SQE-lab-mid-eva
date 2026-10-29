@@ -240,3 +240,51 @@ auto-save path together.
 | UT-XL-01…06                   | `excel.test.ts`                           | Template sheets/headers; template imports cleanly; typed cells, formulas (result only), rich text; CSV template          |
 | UT-ST-01/02                   | `storage.test.ts`                         | Dexie save/list/replace/remove (fake-indexeddb); preferences never throw                                                 |
 | UT-SNAP, UT-PF, UT-PS, UT-HLP | `packages/core/tests/phase3-core.test.ts` | Snapshots, project-file format, Project sheet layouts, helpers                                                           |
+
+# Test cases — Dashboard and Insights (Phase 4)
+
+Core helpers are in `packages/core/tests/phase4-core.test.ts`; chart data builders in
+`apps/web/src/test/chartData.test.ts`; pages in `dashboard.test.tsx` and `insights.test.tsx`.
+Charts are rendered as canvas stubs in jsdom, so tests check the **data** given to each chart and
+its accessible summary — not pixels (see §7 for the visual checklist).
+
+| ID             | What it checks                                                                                                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| UT-PVB-01…03   | PV baseline: 0 at start, BAC at end, equals PV at the status date, bends at task dates, invalid input                             |
+| UT-PVB-04      | 1,000 tasks: baseline + metrics + insights < 200 ms (NF-01)                                                                       |
+| UT-SNH-01…03   | Previous snapshot, remove, snapshot metrics, trend direction (incl. float noise)                                                  |
+| UT-KPI-01…05   | KPI statuses follow §5 thresholds; N/A → null; overrides; trend semantics                                                         |
+| UT-INO-01/02   | Insight order red → amber → info → green; headline; a tip for every rule                                                          |
+| UT-CAT-01      | Cost variance by category for the worked example                                                                                  |
+| UT-GLO-01      | Every §4 metric has a formula and plain-English meaning                                                                           |
+| UT-CHART-01…05 | S-curve series: PV baseline, EV/AC with live status point, BAC, EAC projection, empty/edge cases                                  |
+| UT-CHART-06/07 | Estimated vs actual: plan / overrun order, bar limit                                                                              |
+| UT-CHART-08/09 | CPI/SPI trend from snapshots; "not enough" below two snapshots                                                                    |
+| UT-CHART-10    | Category variance sorted worst first (Subcontract −31,500 in the sample)                                                          |
+| CT-DASH-01     | Sample project KPIs: CPI 0.87 red, SPI 0.95 amber, CV −74,000, SV −26,926.41, EAC 1,195,161.29, TCPI 1.16, 47.69% complete        |
+| CT-DASH-02     | Trend arrows vs the 2026-03-20 snapshot (CPI down, worse; EAC up, worse)                                                          |
+| CT-DASH-03     | Health panel: "At risk", 47.69% complete vs 54.81% spent, headline IN-03                                                          |
+| CT-DASH-04     | EAC method switch → atypical EAC 1,114,000, saved per project, arrow keys                                                         |
+| CT-DASH-05     | N/A CPI with a keyboard-reachable reason                                                                                          |
+| CT-DASH-06/07  | No project: empty state, "Load sample project", "Create project" opens the form                                                   |
+| CT-DASH-08     | No snapshots: trend message; S-curve still has all five series                                                                    |
+| CT-DASH-09     | Every chart has an aria-label summary and a "how to read" tip                                                                     |
+| CT-DASH-10     | Task results: sort asc/desc, negatives in muted red, status badge, totals row                                                     |
+| CT-DASH-11     | Snapshot history with CPI/SPI; delete with confirmation                                                                           |
+| CT-DASH-12     | Changing the status date recalculates the KPIs                                                                                    |
+| CT-DASH-13     | Formula help panel opens, lists formulas, closes with Esc                                                                         |
+| CT-DASH-14     | All four charts register PNG images for the report                                                                                |
+| CT-INS-01…05   | Insight groups and order, rule IDs, tips; healthy project; contributor links focus the task row; Phase 5 placeholder; empty state |
+
+## 7. Visual checklist (manual)
+
+Run `npm run dev -w apps/web`, load the sample project and open the Dashboard, in **both** themes:
+
+1. S-curve: dotted PV rises from 0 to the budget line at the end date; EV (diamonds) and AC
+   (triangles) stop at the status-date line; the dashed EAC line ends above the BAC line.
+2. Estimated vs actual: outlined vs solid bars are distinguishable in greyscale; "Biggest overrun"
+   puts 2.2 first.
+3. CPI/SPI trend: green band above 1.00; CPI (solid) and SPI (dashed) both fall below it.
+4. Category chart: Subcontract and Material bars to the left in muted red.
+5. Tooltips show currency with 2 dp and indices with 2 dp; hover and keyboard focus on the info icons.
+6. Dark mode: all chart text, gridlines and the lime highlight line are readable.

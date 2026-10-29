@@ -2,39 +2,33 @@ import {
   classifyVariance,
   computeProjectMetrics,
   computeTaskMetrics,
-  createSnapshot,
-  findSnapshot,
   formatCurrency,
   formatPercent,
   NA_REASONS,
   type ProjectDocument,
-  type StatusSnapshot,
   type Task,
-  upsertSnapshot,
   type ValidationIssue,
-  validateProject,
 } from '@evm/core';
-import { Camera, Download, FileSpreadsheet, Save, Upload } from 'lucide-react';
+import { Download, FileSpreadsheet, Save, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { RecordStatusButton, StatusDateInput } from '../../components/StatusControls';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card, FeaturePanel } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Field';
 import { MetricCard } from '../../components/ui/MetricCard';
-import { ConfirmDialog } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Table, TBody, Td, Th, THead, Tr } from '../../components/ui/Table';
 import { buildTasksTemplateCsv } from '../../lib/csvTemplate';
 import { buildTemplateWorkbook, XLSX_MIME } from '../../lib/excel';
 import { downloadBlob, downloadText, errorMessage } from '../../lib/files';
-import type { PageId } from '../../state/navigation';
+import type { Navigate } from '../../state/navigation';
 import { useProjects } from '../../state/ProjectStore';
 import { useToast } from '../../state/ToastProvider';
 import { useProjectFiles } from '../../state/useProjectFiles';
 import { ImportModal, type ImportPayload } from './ImportModal';
 import { TaskTable } from './TaskTable';
 
-export function DataPage({ onNavigate }: { onNavigate: (page: PageId) => void }) {
+export function DataPage({ onNavigate }: { onNavigate: Navigate }) {
   const { current } = useProjects();
   if (!current) {
     return (
@@ -64,9 +58,6 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
   const { project, tasks, snapshots, eacMethod } = document;
 
   const [importing, setImporting] = useState(false);
-  const [statusDraft, setStatusDraft] = useState<string | null>(null);
-  const [statusError, setStatusError] = useState<string | undefined>();
-  const [replaceSnapshot, setReplaceSnapshot] = useState<StatusSnapshot | null>(null);
 
   const taskMetrics = useMemo(
     () => tasks.map((task) => computeTaskMetrics(task, project.statusDate)),
@@ -76,20 +67,6 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
     () => computeProjectMetrics(tasks, project.statusDate, eacMethod),
     [tasks, project.statusDate, eacMethod],
   );
-
-  // FR-15: changing the status date recalculates everything (validated with VR-09 first).
-  const changeStatusDate = (value: string) => {
-    setStatusDraft(value);
-    const result = validateProject({ ...project, statusDate: value });
-    const issue = result.errors.find((e) => e.column === 'Status Date');
-    if (issue) {
-      setStatusError(issue.detail ?? issue.message);
-      return;
-    }
-    setStatusError(undefined);
-    setStatusDraft(null);
-    updateCurrent((d) => ({ ...d, project: { ...d.project, statusDate: value } }));
-  };
 
   const showWarnings = (warnings: readonly ValidationIssue[]) => {
     if (warnings.length > 0) {
@@ -116,32 +93,6 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
     toast({
       tone: 'success',
       title: `Deleted task ${removed.id}`,
-      action: { label: 'Undo', onClick: () => putDocument(before) },
-    });
-  };
-
-  // FR-07: record a snapshot for the status date (asks before replacing one for the same date).
-  const recordStatus = () => {
-    const snapshot = createSnapshot(tasks, project.statusDate);
-    if (!snapshot) {
-      toast({
-        tone: 'error',
-        title: 'Could not record status',
-        description: 'Check the task dates and status date.',
-      });
-      return;
-    }
-    if (findSnapshot(snapshots, snapshot.date)) setReplaceSnapshot(snapshot);
-    else saveSnapshot(snapshot);
-  };
-
-  const saveSnapshot = (snapshot: StatusSnapshot) => {
-    const before = document;
-    updateCurrent((d) => ({ ...d, snapshots: upsertSnapshot(d.snapshots, snapshot) }));
-    setReplaceSnapshot(null);
-    toast({
-      tone: 'success',
-      title: `Status recorded for ${snapshot.date}`,
       action: { label: 'Undo', onClick: () => putDocument(before) },
     });
   };
@@ -197,29 +148,12 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
       <PageHeader
         title="Data"
         description="Edit tasks or import a file. Totals and variances update as you go."
-        actions={
-          <Button
-            variant="primary"
-            icon={Camera}
-            onClick={recordStatus}
-            disabled={tasks.length === 0}
-          >
-            Record status
-          </Button>
-        }
+        actions={<RecordStatusButton document={document} />}
       />
 
       <Card>
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <Input
-            label="Status date"
-            type="date"
-            value={statusDraft ?? project.statusDate}
-            onChange={(event) => changeStatusDate(event.target.value)}
-            error={statusError}
-            hint={`Project runs ${project.startDate} → ${project.endDate}`}
-            fieldClassName="w-64"
-          />
+          <StatusDateInput document={document} />
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={Upload} onClick={() => setImporting(true)}>
               Import file
@@ -268,7 +202,7 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
         <MetricCard
           label="% Variance"
           value={formatPercent(metrics.variancePercent)}
-          title={metrics.variancePercent === null ? NA_REASONS.bacPercent : undefined}
+          naReason={NA_REASONS.bacPercent}
           footer="Variance ÷ estimated cost"
         />
       </section>
@@ -290,7 +224,7 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
       <Card
         flush
         title="Recorded snapshots"
-        description="Each “Record status” saves cumulative PV, EV and AC for the status date. Charts use these in Phase 4."
+        description="Each “Record status” saves cumulative PV, EV and AC for the status date. The Dashboard charts and history use these."
       >
         {snapshots.length === 0 ? (
           <p className="px-6 pb-6 text-control text-muted">No snapshots yet.</p>
@@ -324,15 +258,6 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
         existingTaskCount={tasks.length}
         onClose={() => setImporting(false)}
         onImport={applyImport}
-      />
-
-      <ConfirmDialog
-        open={replaceSnapshot !== null}
-        title="Replace snapshot?"
-        confirmLabel="Replace snapshot"
-        message={`A snapshot for ${replaceSnapshot?.date} already exists. Replace it with the current figures?`}
-        onConfirm={() => replaceSnapshot && saveSnapshot(replaceSnapshot)}
-        onCancel={() => setReplaceSnapshot(null)}
       />
     </div>
   );

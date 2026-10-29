@@ -66,6 +66,11 @@ export const NA_REASONS = {
   eac: 'CPI is not available or is 0, so this EAC method cannot be calculated.',
   tcpi: 'Actual cost equals the budget, so there is no budget left to compare against.',
   bacPercent: 'Total budget (BAC) is 0, so this percentage cannot be calculated.',
+  cv: 'Earned value or actual cost is not available.',
+  sv: 'Planned value is not available (check the task and status dates).',
+  vac: 'EAC could not be calculated, so VAC is not available.',
+  etc: 'EAC could not be calculated, so ETC is not available.',
+  trend: 'Record at least two status updates to compare against.',
 } as const;
 
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com\d|lpt\d)$/i;

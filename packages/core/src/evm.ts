@@ -273,3 +273,46 @@ export function computeProjectMetrics(
   const taskMetrics = tasks.map((task) => computeTaskMetrics(task, statusDate));
   return computeMetricsFromTotals(sumTaskMetrics(tasks, taskMetrics), eacMethod);
 }
+
+export interface CategoryVariance {
+  category: string;
+  taskCount: number;
+  estimated: MetricValue; // Σ budget
+  actual: MetricValue; // Σ AC
+  ev: MetricValue;
+  /** Simple variance: estimated − actual. */
+  variance: MetricValue;
+  /** Cost variance: EV − AC (what FR-23 charts). */
+  cv: MetricValue;
+}
+
+/**
+ * FR-23: totals per cost category, in order of first appearance. `taskMetrics[i]` must
+ * belong to `tasks[i]` (pass the already-computed results to avoid recalculating).
+ */
+export function varianceByCategory(
+  tasks: readonly Task[],
+  taskMetrics: readonly TaskMetrics[],
+): CategoryVariance[] {
+  const groups = new Map<string, { tasks: Task[]; metrics: TaskMetrics[] }>();
+  tasks.forEach((task, i) => {
+    const group = groups.get(task.category) ?? { tasks: [], metrics: [] };
+    group.tasks.push(task);
+    if (taskMetrics[i]) group.metrics.push(taskMetrics[i]);
+    groups.set(task.category, group);
+  });
+  return [...groups].map(([category, group]) => {
+    const estimated = budgetAtCompletion(group.tasks);
+    const actual = sumOf(group.metrics.map((m) => m.actualCost));
+    const ev = sumOf(group.metrics.map((m) => m.ev));
+    return {
+      category,
+      taskCount: group.tasks.length,
+      estimated,
+      actual,
+      ev,
+      variance: simpleVariance(estimated, actual),
+      cv: costVariance(ev, actual),
+    };
+  });
+}

@@ -102,7 +102,33 @@ against WCAG AA (4.5:1) in both modes by `apps/web/src/test/contrast.test.ts`.
 
 ## 9. Charts and reports (Phases 4 and 6)
 
-- Series colours come from the tokens: PV = `--text-muted`, EV = `--success`, AC = `--error`,
-  BAC/reference lines = `--border-strong`, highlight = `--accent`.
-- Chart text uses DM Sans; numbers in tooltips use IBM Plex Mono.
+- Colours are read from the CSS tokens at render time (`components/charts/palette.ts`) and re-read
+  when the theme changes, so charts follow light/dark mode.
+- Series colours: PV = `--text-muted`, EV = `--success`, AC = `--error`, BAC / reference lines =
+  `--border-strong`, gridlines = `--border`. **Highlight** (EAC projection, CPI line, actual-cost
+  bars) = `--feature` (forest green) in light mode and `--accent` (lime) in dark mode — lime is too
+  light to read on white.
+- **Never colour alone** — every series also differs in line style and point shape:
+
+  | Chart                     | Series      | Line / bar                                        | Points      |
+  | ------------------------- | ----------- | ------------------------------------------------- | ----------- |
+  | S-curve                   | PV          | dotted                                            | none        |
+  |                           | EV          | solid                                             | diamond     |
+  |                           | AC          | solid                                             | triangle    |
+  |                           | BAC         | long dashes                                       | none        |
+  |                           | EAC         | short dashes                                      | star at end |
+  | Estimated vs actual       | Estimated   | outlined, light fill                              | —           |
+  |                           | Actual      | solid fill                                        | —           |
+  | CPI / SPI trend           | CPI         | solid                                             | circle      |
+  |                           | SPI         | dashed                                            | diamond     |
+  |                           | Target 1.00 | dotted                                            | none        |
+  | Cost variance by category | CV          | bars left (−) / right (+) of a stronger zero line | —           |
+
+- Thin gridlines (0.5px), rounded bar corners (4px), legends at the bottom with point-style keys,
+  no animation (instant live updates and stable PNG export).
+- Chart text uses DM Sans; task IDs and dates on axes use IBM Plex Mono. Tooltips use core
+  `format.ts` (currency, 2 dp indices, "N/A").
+- Each chart card has a title, a one-line description and an info button ("How to read") with a
+  keyboard-reachable tooltip; the canvas has an `aria-label` summary with the key numbers.
+- Status date: dashed vertical line with a label. Healthy zone (CPI/SPI ≥ 1.00): `--success` at 10%.
 - PDF reports use the light-mode palette with the same fonts.

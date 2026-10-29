@@ -15,6 +15,8 @@ interface ModalProps {
   footer?: ReactNode;
   size?: 'md' | 'lg' | 'xl';
   description?: ReactNode;
+  /** 'right' renders a slide-out panel docked to the right edge. */
+  placement?: 'center' | 'right';
 }
 
 /** Accessible dialog: focus moves in, Tab is trapped, Esc closes, focus returns on close. */
@@ -26,7 +28,9 @@ export function Modal({
   footer,
   size = 'md',
   description,
+  placement = 'center',
 }: ModalProps) {
+  const right = placement === 'right';
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -68,7 +72,12 @@ export function Modal({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-overlay p-4 sm:p-10">
+    <div
+      className={cx(
+        'fixed inset-0 z-40 flex bg-overlay',
+        right ? 'justify-end' : 'items-start justify-center overflow-y-auto p-4 sm:p-10',
+      )}
+    >
       <div
         ref={panelRef}
         role="dialog"
@@ -76,10 +85,11 @@ export function Modal({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cx(
-          'w-full rounded-xl border border-border bg-card text-text',
-          size === 'md' && 'max-w-lg',
-          size === 'lg' && 'max-w-3xl',
-          size === 'xl' && 'max-w-6xl',
+          'w-full border border-border bg-card text-text',
+          right ? 'flex h-full max-w-md flex-col overflow-y-auto rounded-l-xl' : 'rounded-xl',
+          !right && size === 'md' && 'max-w-lg',
+          !right && size === 'lg' && 'max-w-3xl',
+          !right && size === 'xl' && 'max-w-6xl',
         )}
       >
         <header className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">

@@ -2,11 +2,14 @@ import type { ReactNode } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AppShell } from './components/layout/AppShell';
 import type { ProjectStorage } from './lib/storage';
+import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { DataPage } from './pages/data/DataPage';
+import { InsightsPage } from './pages/insights/InsightsPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { type PageId, useHashPage } from './state/navigation';
+import { ChartImagesProvider } from './state/ChartImagesProvider';
+import { type Navigate, type PageId, type PageParams, useHashRoute } from './state/navigation';
 import { ProjectStoreProvider } from './state/ProjectStore';
 import { ThemeProvider } from './state/ThemeProvider';
 import { ToastProvider } from './state/ToastProvider';
@@ -16,35 +19,33 @@ export function Providers({ storage, children }: { storage: ProjectStorage; chil
     <ErrorBoundary storage={storage}>
       <ThemeProvider>
         <ToastProvider>
-          <ProjectStoreProvider storage={storage}>{children}</ProjectStoreProvider>
+          <ProjectStoreProvider storage={storage}>
+            <ChartImagesProvider>{children}</ChartImagesProvider>
+          </ProjectStoreProvider>
         </ToastProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
 }
 
-function CurrentPage({ page, navigate }: { page: PageId; navigate: (page: PageId) => void }) {
+function CurrentPage({
+  page,
+  navigate,
+  params,
+}: {
+  page: PageId;
+  navigate: Navigate;
+  params: PageParams;
+}) {
   switch (page) {
     case 'projects':
-      return <ProjectsPage onNavigate={navigate} />;
+      return <ProjectsPage onNavigate={navigate} params={params} />;
     case 'data':
       return <DataPage onNavigate={navigate} />;
     case 'dashboard':
-      return (
-        <PlaceholderPage
-          title="Dashboard"
-          phase={4}
-          description="KPI cards, the S-curve, cost comparison and CPI/SPI trend charts."
-        />
-      );
+      return <DashboardPage onNavigate={navigate} params={params} />;
     case 'insights':
-      return (
-        <PlaceholderPage
-          title="Insights"
-          phase={5}
-          description="Indicator-based insights, anomaly detection and an AI summary."
-        />
-      );
+      return <InsightsPage onNavigate={navigate} />;
     case 'report':
       return <PlaceholderPage title="Report" phase={6} description="PDF, Excel and CSV reports." />;
     case 'settings':
@@ -53,11 +54,11 @@ function CurrentPage({ page, navigate }: { page: PageId; navigate: (page: PageId
 }
 
 export default function App({ storage }: { storage: ProjectStorage }) {
-  const [page, navigate] = useHashPage();
+  const [page, navigate, params] = useHashRoute();
   return (
     <Providers storage={storage}>
       <AppShell page={page} onNavigate={navigate}>
-        <CurrentPage page={page} navigate={navigate} />
+        <CurrentPage page={page} navigate={navigate} params={params} />
       </AppShell>
     </Providers>
   );
