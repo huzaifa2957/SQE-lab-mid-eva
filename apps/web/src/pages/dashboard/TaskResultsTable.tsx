@@ -1,4 +1,5 @@
 import {
+  type Anomaly,
   classifyVariance,
   formatIndex,
   formatNumber,
@@ -10,6 +11,7 @@ import {
 } from '@evm/core';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { AnomalyMarker } from '../../components/AnomalyMarker';
 import { Badge, type Tone } from '../../components/ui/Badge';
 import { cx } from '../../components/ui/cx';
 import { Table, TBody, Td, Th, THead, Tr } from '../../components/ui/Table';
@@ -87,6 +89,8 @@ interface TaskResultsTableProps {
   currency: string;
   /** Task to scroll to and highlight (from an Insights link). */
   focusTaskId?: string;
+  /** FR-31: anomalies per task ID; those rows get a warning marker. */
+  anomaliesByTask?: ReadonlyMap<string, readonly Anomaly[]>;
 }
 
 /** FR-12: per-task results, sortable, with a totals row. */
@@ -96,6 +100,7 @@ export function TaskResultsTable({
   totals,
   currency,
   focusTaskId,
+  anomaliesByTask,
 }: TaskResultsTableProps) {
   const [sort, setSort] = useState<{ key: ColumnKey; dir: 'asc' | 'desc' } | null>(null);
 
@@ -174,11 +179,13 @@ export function TaskResultsTable({
         {rows.map((row) => {
           const status = classifyVariance(row.metrics.variance);
           const badge = status ? STATUS[status]! : { tone: 'neutral' as Tone, label: 'N/A' };
+          const anomalies = anomaliesByTask?.get(row.task.id);
           return (
             <Tr
               key={row.task.id}
               id={`task-row-${row.task.id}`}
               tabIndex={-1}
+              tone={anomalies ? 'warning' : undefined}
               data-focused={focusTaskId === row.task.id || undefined}
               className={cx(
                 focusTaskId === row.task.id && 'bg-card-subtle outline-2 outline-accent',
@@ -188,6 +195,7 @@ export function TaskResultsTable({
                 const value = cellValue(row, column.key);
                 const negative =
                   typeof value === 'number' && value < 0 && NEGATIVE_KEYS.has(column.key);
+                const text = formatCell(value, column.format);
                 return (
                   <Td
                     key={column.key}
@@ -197,9 +205,17 @@ export function TaskResultsTable({
                     className={cx(
                       negative && 'text-error-strong',
                       column.key === 'name' && 'min-w-40',
+                      column.key === 'id' && 'whitespace-nowrap',
                     )}
                   >
-                    {formatCell(value, column.format)}
+                    {column.key === 'id' ? (
+                      <span className="inline-flex items-center gap-1">
+                        {text}
+                        <AnomalyMarker taskId={row.task.id} anomalies={anomalies} />
+                      </span>
+                    ) : (
+                      text
+                    )}
                   </Td>
                 );
               })}

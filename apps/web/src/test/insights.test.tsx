@@ -68,10 +68,11 @@ describe('Insights page (FR-26, FR-27)', () => {
     expect(row).toHaveFocus();
   });
 
-  it('CT-INS-04 the Phase 5 section is clearly marked', async () => {
+  it('CT-INS-04 the Phase 5 sections replace the placeholder: Unusual expenses, then AI summary', async () => {
     await renderApp({ documents: [sample()], page: 'insights' });
-    const section = within(screen.getByRole('region', { name: 'Unusual expenses and AI summary' }));
-    expect(section.getByText('Coming in Phase 5')).toBeInTheDocument();
+    const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(headings.slice(-2)).toEqual(['Unusual expenses', 'AI summary']);
+    expect(screen.queryByText('Coming in Phase 5')).not.toBeInTheDocument();
   });
 
   it('CT-INS-05 no project: empty state', async () => {

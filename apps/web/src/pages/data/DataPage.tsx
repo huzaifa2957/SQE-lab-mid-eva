@@ -18,17 +18,24 @@ import { Card, FeaturePanel } from '../../components/ui/Card';
 import { MetricCard } from '../../components/ui/MetricCard';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Table, TBody, Td, Th, THead, Tr } from '../../components/ui/Table';
+import { useAnomalies } from '../../lib/analysis';
 import { buildTasksTemplateCsv } from '../../lib/csvTemplate';
 import { buildTemplateWorkbook, XLSX_MIME } from '../../lib/excel';
 import { downloadBlob, downloadText, errorMessage } from '../../lib/files';
-import type { Navigate } from '../../state/navigation';
+import type { Navigate, PageParams } from '../../state/navigation';
 import { useProjects } from '../../state/ProjectStore';
 import { useToast } from '../../state/ToastProvider';
 import { useProjectFiles } from '../../state/useProjectFiles';
 import { ImportModal, type ImportPayload } from './ImportModal';
 import { TaskTable } from './TaskTable';
 
-export function DataPage({ onNavigate }: { onNavigate: Navigate }) {
+export function DataPage({
+  onNavigate,
+  params = {},
+}: {
+  onNavigate: Navigate;
+  params?: PageParams;
+}) {
   const { current } = useProjects();
   if (!current) {
     return (
@@ -48,10 +55,16 @@ export function DataPage({ onNavigate }: { onNavigate: Navigate }) {
       </div>
     );
   }
-  return <DataWorkspace document={current} />;
+  return <DataWorkspace document={current} focusTaskId={params.task} />;
 }
 
-function DataWorkspace({ document }: { document: ProjectDocument }) {
+function DataWorkspace({
+  document,
+  focusTaskId,
+}: {
+  document: ProjectDocument;
+  focusTaskId?: string;
+}) {
   const { updateCurrent, putDocument } = useProjects();
   const toast = useToast();
   const files = useProjectFiles();
@@ -140,6 +153,8 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
     }
   };
 
+  const { anomaliesByTask } = useAnomalies(document);
+
   const varianceStatus = classifyVariance(metrics.variance);
   const money = (value: number | null) => formatCurrency(value, project.currency);
 
@@ -218,6 +233,8 @@ function DataWorkspace({ document }: { document: ProjectDocument }) {
           project={project}
           onSave={saveTask}
           onDelete={deleteTask}
+          anomaliesByTask={anomaliesByTask}
+          focusTaskId={focusTaskId}
         />
       </Card>
 

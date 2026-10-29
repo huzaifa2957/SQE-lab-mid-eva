@@ -6,7 +6,8 @@
   "description": "Earned Value Management cost tracker — web and desktop apps sharing one tested calculation core.",
   "workspaces": [
     "packages/core",
-    "apps/web"
+    "apps/web",
+    "apps/ai-proxy"
   ],
   "engines": {
     "node": ">=20.19"

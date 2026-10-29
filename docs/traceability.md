@@ -33,7 +33,12 @@ and tested in `packages/core`; the UI part of the requirement comes in a later p
 | FR-25  | KPI cards colour-coded by §5, with trend vs previous snapshot                      | UT-KPI-01…05, UT-SNH-03, CT-DASH-01/02                               | Unit + Component   | Pass        |
 | FR-26  | Insights panel (rules §5), grouped, with tips                                      | UT-IN-00…13, UT-INO-01/02, UT-SMP-03, CT-INS-01…04                   | Unit + Component   | Pass        |
 | FR-27  | Overall health badge                                                               | UT-IN-14, UT-IN-15, UT-SMP-03, CT-DASH-03, CT-INS-01/02              | Unit + Component   | Pass        |
-| FR-30  | Anomaly detection AN-01…AN-06                                                      | UT-AN-00…08, UT-SMP-03                                               | Unit               | Pass (core) |
+| FR-30  | Anomaly detection AN-01…AN-06                                                      | UT-AN-00…10, UT-SMP-03, CT-ANO-01                                    | Unit + Component   | Pass        |
+| FR-31  | Anomaly table (reason, severity, counts); highlighted task rows                    | CT-ANO-01…07                                                         | Component          | Pass        |
+| FR-32  | AI summary from aggregated metrics, insights and anomalies only                    | UT-AI-01…05, PT-01, PT-04, PT-23, CT-AI-01                           | Unit + Component   | Pass        |
+| FR-33  | Loading state, 20 s timeout, retry                                                 | PT-08, CT-AI-02, CT-AI-09, CT-AI-12                                  | Unit + Component   | Pass        |
+| FR-34  | Offline rule-based summary labelled "Generated offline"                            | UT-AI-07…10, CT-AI-02…07                                             | Unit + Component   | Pass        |
+| FR-35  | Plain-text AI output, labelled and timed; kept with the project                    | UT-AI-04, UT-PF-07-P/F, CT-AI-01, CT-AI-08, CT-AI-10/11              | Unit + Component   | Pass        |
 
 ## Insight rules (§5)
 
@@ -86,19 +91,22 @@ and tested in `packages/core`; the UI part of the requirement comes in a later p
 
 ## Non-functional and security
 
-| Req ID | Description                                                       | Test case ID(s)                                                                  | Type             | Status      |
-| ------ | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------- | ----------- |
-| RL-01  | Core returns null, never NaN/Infinity                             | UT-EVM-08b, UT-EVM-19, UT-FMT-05                                                 | Unit             | Pass        |
-| RL-02  | Parse errors are user-readable with row/column                    | UT-SMP-06, UT-VR-\*-F, CT-IMP-02…04, CT-PF-03/04                                 | Unit + Component | Pass        |
-| RL-03  | Error boundary with Reload / Export data                          | CT-ERR-01                                                                        | Component        | Pass        |
-| RL-04  | Confirm + undo before replacing data                              | CT-IMP-01, CT-PF-05, CT-PRJ-03, CT-TASK-04, CT-TASK-07                           | Component        | Pass        |
-| NF-01  | Recalculation for 1,000 tasks < 200 ms (core part)                | UT-PVB-04 (baseline + metrics + insights for 1,000 tasks)                        | Unit             | Pass (core) |
-| NF-03  | Labels, keyboard use, focus ring, icon + colour; WCAG AA contrast | CT-CON-\* (44 checks), CT-TASK-02/05, CT-THEME-\*, CT-DASH-04/05/09, CT-INS-03   | Component        | Pass        |
-| NF-04  | Core ≥ 90% line coverage; overall ≥ 70%                           | `npm run test:coverage` (thresholds enforced)                                    | Static           | Pass        |
-| NF-05  | ESLint + Prettier pass in CI; TS strict                           | CI `lint`, `format:check`, `typecheck`                                           | Static           | Pass        |
-| NF-05  | No `any` in `packages/core`                                       | ESLint `no-explicit-any` (core)                                                  | Static           | Pass        |
-| SR-01  | `.env` git-ignored; `.env.example` committed                      | Manual review of `.gitignore`                                                    | Manual           | Pass        |
-| SR-03  | No `dangerouslySetInnerHTML`; user text as plain text             | ESLint `no-restricted-syntax` (web), UT-XL-03, UT-SMP-08                         | Static + Unit    | Pass        |
-| SR-05  | Content-Security-Policy meta tag in the build                     | Manual: `dist/index.html` contains the CSP; ExcelJS chunk checked for eval paths | Manual           | Pass        |
-| SR-04  | Formula-injection text detected on import                         | UT-PAR-18, UT-SMP-08 (export escaping: Phase 6)                                  | Unit             | Partial     |
-| SR-07  | `npm audit` clean of high/critical; Dependabot                    | CI `npm audit --audit-level=high`                                                | Static           | Pass        |
+| Req ID | Description                                                                         | Test case ID(s)                                                                                                            | Type               | Status      |
+| ------ | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------- |
+| RL-01  | Core returns null, never NaN/Infinity                                               | UT-EVM-08b, UT-EVM-19, UT-FMT-05                                                                                           | Unit               | Pass        |
+| RL-02  | Parse errors are user-readable with row/column                                      | UT-SMP-06, UT-VR-\*-F, CT-IMP-02…04, CT-PF-03/04                                                                           | Unit + Component   | Pass        |
+| RL-03  | Error boundary with Reload / Export data                                            | CT-ERR-01                                                                                                                  | Component          | Pass        |
+| RL-04  | Confirm + undo before replacing data                                                | CT-IMP-01, CT-PF-05, CT-PRJ-03, CT-TASK-04, CT-TASK-07                                                                     | Component          | Pass        |
+| NF-01  | Recalculation for 1,000 tasks < 200 ms (core part)                                  | UT-PVB-04 (baseline + metrics + insights for 1,000 tasks)                                                                  | Unit               | Pass (core) |
+| NF-03  | Labels, keyboard use, focus ring, icon + colour; WCAG AA contrast                   | CT-CON-\* (44 checks), CT-TASK-02/05, CT-THEME-\*, CT-DASH-04/05/09, CT-INS-03                                             | Component          | Pass        |
+| NF-04  | Core ≥ 90% line coverage; overall ≥ 70%                                             | `npm run test:coverage` (thresholds enforced)                                                                              | Static             | Pass        |
+| NF-05  | ESLint + Prettier pass in CI; TS strict                                             | CI `lint`, `format:check`, `typecheck`                                                                                     | Static             | Pass        |
+| NF-05  | No `any` in `packages/core`                                                         | ESLint `no-explicit-any` (core)                                                                                            | Static             | Pass        |
+| SR-01  | Key only in server env; `.env` git-ignored; never sent to clients or logged         | PT-14, PT-20/21, PT-25; build check: no key material in `dist`; `.gitignore`                                               | Unit + Manual      | Pass        |
+| SR-02  | Proxy: CORS allow-list, 20 KB body, schema, 10/min/IP, 20 s timeout, generic errors | PT-01…13                                                                                                                   | Unit               | Pass        |
+| SR-03  | No `dangerouslySetInnerHTML`; user and AI text as plain text                        | ESLint `no-restricted-syntax` (web), UT-XL-03, UT-SMP-08, CT-AI-08                                                         | Static + Component | Pass        |
+| SR-05  | Content-Security-Policy meta tag in the build                                       | Manual: `dist/index.html` contains the CSP; `connect-src` adds only the proxy origin; ExcelJS chunk checked for eval paths | Manual             | Pass        |
+| SR-04  | Formula-injection text detected on import                                           | UT-PAR-18, UT-SMP-08 (export escaping: Phase 6)                                                                            | Unit               | Partial     |
+| SR-07  | `npm audit` clean of high/critical; Dependabot                                      | CI `npm audit --audit-level=high`                                                                                          | Static             | Pass        |
+| SR-08  | Prompt-injection hygiene: truncated names, data-only JSON, system rule              | UT-AI-02, PT-09, PT-22, PT-23                                                                                              | Unit               | Pass        |
+| RL-05  | AI network failures fall back to the offline summary                                | CT-AI-02…07                                                                                                                | Component          | Pass        |

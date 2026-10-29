@@ -1,4 +1,5 @@
 import {
+  type Anomaly,
   classifyVariance,
   formatNumber,
   formatPercent,
@@ -11,9 +12,11 @@ import {
   type ValidationIssue,
 } from '@evm/core';
 import { Check, Pencil, Plus, Trash2, TriangleAlert, X } from 'lucide-react';
-import { type KeyboardEvent, useState } from 'react';
+import { type KeyboardEvent, useEffect, useState } from 'react';
+import { AnomalyMarker } from '../../components/AnomalyMarker';
 import { Badge, type Tone } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { cx } from '../../components/ui/cx';
 import { Input, Select } from '../../components/ui/Field';
 import { Table, TBody, Td, Th, THead, Tr } from '../../components/ui/Table';
 import {
@@ -31,6 +34,10 @@ interface TaskTableProps {
   /** Called with the validated task and any warnings (VR-10/11/12) to show. */
   onSave: (task: Task, index: number | null, warnings: readonly ValidationIssue[]) => void;
   onDelete: (index: number) => void;
+  /** FR-31: anomalies per task ID; those rows get a warning marker. */
+  anomaliesByTask?: ReadonlyMap<string, readonly Anomaly[]>;
+  /** Task to scroll to and highlight (from an Insights link). */
+  focusTaskId?: string;
 }
 
 interface EditState {
@@ -46,8 +53,23 @@ const VARIANCE_BADGE: Record<string, { tone: Tone; label: string }> = {
   unfavourable: { tone: 'error', label: 'Over budget' },
 };
 
-export function TaskTable({ tasks, metrics, project, onSave, onDelete }: TaskTableProps) {
+export function TaskTable({
+  tasks,
+  metrics,
+  project,
+  onSave,
+  onDelete,
+  anomaliesByTask,
+  focusTaskId,
+}: TaskTableProps) {
   const [edit, setEdit] = useState<EditState | null>(null);
+
+  useEffect(() => {
+    if (!focusTaskId) return;
+    const row = document.getElementById(`task-row-${focusTaskId}`);
+    row?.scrollIntoView?.({ block: 'center' });
+    row?.focus();
+  }, [focusTaskId]);
 
   const startAdd = () =>
     setEdit({
@@ -125,9 +147,22 @@ export function TaskTable({ tasks, metrics, project, onSave, onDelete }: TaskTab
             const badge = status
               ? VARIANCE_BADGE[status]!
               : { tone: 'neutral' as Tone, label: 'N/A' };
+            const anomalies = anomaliesByTask?.get(task.id);
             return (
-              <Tr key={task.id}>
-                <Td mono>{task.id}</Td>
+              <Tr
+                key={task.id}
+                id={`task-row-${task.id}`}
+                tabIndex={-1}
+                tone={anomalies ? 'warning' : undefined}
+                data-focused={focusTaskId === task.id || undefined}
+                className={cx(focusTaskId === task.id && 'outline-2 outline-accent')}
+              >
+                <Td mono className="whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1">
+                    {task.id}
+                    <AnomalyMarker taskId={task.id} anomalies={anomalies} />
+                  </span>
+                </Td>
                 <Td className="min-w-40">{task.name}</Td>
                 <Td>{task.category}</Td>
                 <Td numeric>{formatNumber(task.budget)}</Td>

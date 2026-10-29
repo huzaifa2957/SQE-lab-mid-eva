@@ -1,6 +1,7 @@
 // Project documents and the .evm.json file format (FR-08).
 
 import { z } from 'zod';
+import { type StoredSummary, StoredSummarySchema } from './aiSummary';
 import { sanitizeFileName } from './format';
 import type { EacMethod, Project, StatusSnapshot, Task } from './types';
 import {
@@ -26,6 +27,8 @@ export interface ProjectDocument {
   tasks: Task[];
   snapshots: StatusSnapshot[];
   eacMethod: EacMethod;
+  /** Last AI or offline summary (FR-35), kept for the report. */
+  aiSummary?: StoredSummary;
 }
 
 export function createProjectDocument(
@@ -43,8 +46,9 @@ export function createProjectDocument(
 }
 
 export function serializeProjectFile(document: ProjectDocument): string {
-  const { format, version, project, tasks, snapshots, eacMethod } = document;
-  return `${JSON.stringify({ format, version, project, tasks, snapshots, eacMethod }, null, 2)}\n`;
+  const { format, version, project, tasks, snapshots, eacMethod, aiSummary } = document;
+  const file = { format, version, project, tasks, snapshots, eacMethod, aiSummary };
+  return `${JSON.stringify(file, null, 2)}\n`;
 }
 
 /** "Clinic: Phase 2" → "Clinic_Phase_2.evm.json" */
@@ -77,6 +81,7 @@ const EnvelopeSchema = z.object({
   tasks: z.array(z.unknown()),
   snapshots: z.array(z.unknown()),
   eacMethod: z.enum(['typical', 'atypical', 'combined']).default('typical'),
+  aiSummary: z.unknown().optional(),
 });
 
 function prefixed(prefix: string, issues: ValidationIssue[]): ValidationIssue[] {
@@ -127,6 +132,12 @@ export function parseProjectFile(
   const tasks = validateTasks(envelope.data.tasks, { project: project.project ?? undefined });
   const snapshots = validateSnapshots(envelope.data.snapshots);
 
+  // A damaged summary is dropped with a warning; it never blocks opening the project.
+  const summary =
+    envelope.data.aiSummary === undefined
+      ? null
+      : StoredSummarySchema.safeParse(envelope.data.aiSummary);
+
   const isBac = (issue: ValidationIssue) => issue.ruleId === 'VR-13';
   const errors = [
     ...prefixed('Project', project.errors),
@@ -146,6 +157,15 @@ export function parseProjectFile(
       })),
     ),
     ...prefixed('Snapshots', snapshots.warnings),
+    ...(summary && !summary.success
+      ? [
+          {
+            ...fileIssue('The saved AI summary was damaged and has been removed.'),
+            ruleId: 'FR-35',
+            severity: 'warning' as const,
+          },
+        ]
+      : []),
   ];
 
   const valid = errors.length === 0 && project.project !== null;
@@ -161,6 +181,7 @@ export function parseProjectFile(
           tasks: tasks.tasks,
           snapshots: snapshots.snapshots,
           eacMethod: envelope.data.eacMethod,
+          ...(summary?.success && { aiSummary: summary.data }),
         }
       : null,
   };

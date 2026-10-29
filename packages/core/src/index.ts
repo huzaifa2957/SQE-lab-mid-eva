@@ -8,6 +8,7 @@ export * from './validation';
 export * from './csv';
 export * from './insights';
 export * from './anomalies';
+export * from './aiSummary';
 export * from './format';
 export * from './snapshots';
 export * from './projectFile';

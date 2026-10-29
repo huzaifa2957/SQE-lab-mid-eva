@@ -255,3 +255,34 @@ export function detectAnomalies(input: AnomalyInput): Anomaly[] {
     ...detectCompleteLowSpend(input.tasks, t, input.currency),
   ];
 }
+
+// ---------------------------------------------------------------------------
+// Presentation helpers (FR-31)
+// ---------------------------------------------------------------------------
+
+const SEVERITY_ORDER: Record<AnomalySeverity, number> = { high: 0, medium: 1, low: 2 };
+
+/** Most severe first; rule order is kept within a severity. */
+export function sortAnomalies<T extends Pick<Anomaly, 'severity'>>(anomalies: readonly T[]): T[] {
+  return [...anomalies].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+}
+
+export function countAnomaliesBySeverity(
+  anomalies: readonly Pick<Anomaly, 'severity'>[],
+): Record<AnomalySeverity, number> {
+  const counts: Record<AnomalySeverity, number> = { high: 0, medium: 0, low: 0 };
+  for (const anomaly of anomalies) counts[anomaly.severity]++;
+  return counts;
+}
+
+/** Task-level anomalies keyed by task ID (for row markers in task tables). */
+export function groupAnomaliesByTask(anomalies: readonly Anomaly[]): Map<string, Anomaly[]> {
+  const groups = new Map<string, Anomaly[]>();
+  for (const anomaly of anomalies) {
+    if (anomaly.taskId === undefined) continue;
+    const list = groups.get(anomaly.taskId);
+    if (list) list.push(anomaly);
+    else groups.set(anomaly.taskId, [anomaly]);
+  }
+  return groups;
+}

@@ -1,4 +1,4 @@
-import type { HealthStatus, InsightStatus } from '@evm/core';
+import type { AnomalySeverity, HealthStatus, InsightStatus } from '@evm/core';
 import type { Tone } from './ui/tones';
 
 /** Overall health (FR-27) → badge. */
@@ -36,3 +36,12 @@ export const INSIGHT_GROUPS: readonly { status: InsightStatus; tone: Tone; headi
   { status: 'info', tone: 'info', heading: 'For information' },
   { status: 'green', tone: 'success', heading: 'Going well' },
 ];
+
+/** Anomaly severity (FR-31) → badge. */
+export const ANOMALY_SEVERITY_BADGE: Readonly<
+  Record<AnomalySeverity, { tone: Tone; label: string }>
+> = {
+  high: { tone: 'error', label: 'High' },
+  medium: { tone: 'warning', label: 'Medium' },
+  low: { tone: 'info', label: 'Low' },
+};

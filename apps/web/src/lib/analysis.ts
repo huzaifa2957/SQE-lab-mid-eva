@@ -2,10 +2,13 @@
 // 1,000 tasks stay smooth (NF-01). Each step only re-runs when its own inputs change (FR-24).
 
 import {
+  type Anomaly,
   type CategoryVariance,
   computeMetricsFromTotals,
   computeTaskMetrics,
+  detectAnomalies,
   generateInsights,
+  groupAnomaliesByTask,
   type HealthStatus,
   headlineInsight,
   type Insight,
@@ -33,6 +36,20 @@ export interface ProjectAnalysis {
   statuses: Record<KpiId, HealthStatus | null>;
   previous: { snapshot: StatusSnapshot; metrics: ProjectMetrics } | null;
   categories: CategoryVariance[];
+  anomalies: Anomaly[];
+  anomaliesByTask: Map<string, Anomaly[]>;
+}
+
+/** FR-30: unusual expenses (AN-01…AN-06), and the task-level ones keyed by task ID. */
+export function useAnomalies(
+  document: ProjectDocument,
+): Pick<ProjectAnalysis, 'anomalies' | 'anomaliesByTask'> {
+  const { tasks, snapshots } = document;
+  const { currency } = document.project;
+  return useMemo(() => {
+    const anomalies = detectAnomalies({ tasks, snapshots, currency });
+    return { anomalies, anomaliesByTask: groupAnomaliesByTask(anomalies) };
+  }, [tasks, snapshots, currency]);
 }
 
 export function useAnalysis(document: ProjectDocument): ProjectAnalysis {
@@ -58,6 +75,7 @@ export function useAnalysis(document: ProjectDocument): ProjectAnalysis {
       : null;
   }, [snapshots, statusDate, metrics.bac, eacMethod]);
   const categories = useMemo(() => varianceByCategory(tasks, taskMetrics), [tasks, taskMetrics]);
+  const { anomalies, anomaliesByTask } = useAnomalies(document);
 
   return useMemo(
     () => ({
@@ -69,7 +87,9 @@ export function useAnalysis(document: ProjectDocument): ProjectAnalysis {
       statuses: kpiStatuses(metrics),
       previous,
       categories,
+      anomalies,
+      anomaliesByTask,
     }),
-    [taskMetrics, metrics, insights, previous, categories],
+    [taskMetrics, metrics, insights, previous, categories, anomalies, anomaliesByTask],
   );
 }

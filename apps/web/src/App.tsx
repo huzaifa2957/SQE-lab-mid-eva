@@ -41,7 +41,7 @@ function CurrentPage({
     case 'projects':
       return <ProjectsPage onNavigate={navigate} params={params} />;
     case 'data':
-      return <DataPage onNavigate={navigate} />;
+      return <DataPage onNavigate={navigate} params={params} />;
     case 'dashboard':
       return <DashboardPage onNavigate={navigate} params={params} />;
     case 'insights':

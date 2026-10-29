@@ -121,6 +121,7 @@ function Dashboard({ document, focusTaskId }: { document: ProjectDocument; focus
             totals={metrics}
             currency={project.currency}
             focusTaskId={focusTaskId}
+            anomaliesByTask={analysis.anomaliesByTask}
           />
         </Card>
         <Card flush title="Snapshot history" description="Cumulative values at each status update.">

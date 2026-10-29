@@ -43,6 +43,12 @@ export default tseslint.config(
     },
   },
 
+  // apps/ai-proxy: Node server
+  {
+    files: ['apps/ai-proxy/**/*.ts'],
+    languageOptions: { globals: globals.node },
+  },
+
   // Tooling/config files run in Node
   {
     files: ['*.{js,ts}', '**/*.config.{js,ts}'],

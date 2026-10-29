@@ -1,5 +1,5 @@
 import { formatCurrency, INSIGHT_TIPS, type ProjectDocument, topOverrunTasks } from '@evm/core';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useMemo } from 'react';
 import { NoProjectState } from '../../components/NoProjectState';
 import { healthBadge, INSIGHT_GROUPS } from '../../components/statusLabels';
@@ -12,6 +12,8 @@ import { toneIcon } from '../../components/ui/tones';
 import { useAnalysis } from '../../lib/analysis';
 import type { Navigate } from '../../state/navigation';
 import { useProjects } from '../../state/ProjectStore';
+import { AiSummaryPanel } from './AiSummaryPanel';
+import { UnusualExpenses } from './UnusualExpenses';
 
 const TONE_TEXT = {
   error: 'text-error-strong bg-error-soft',
@@ -31,12 +33,13 @@ export function InsightsPage({ onNavigate }: { onNavigate: Navigate }) {
       </div>
     );
   }
-  return <Insights document={current} onNavigate={onNavigate} />;
+  // Keyed so switching project resets (and cancels) the AI summary request.
+  return <Insights key={current.project.id} document={current} onNavigate={onNavigate} />;
 }
 
 function Insights({ document, onNavigate }: { document: ProjectDocument; onNavigate: Navigate }) {
   const analysis = useAnalysis(document);
-  const { insights, health, taskMetrics } = analysis;
+  const { insights, health, taskMetrics, metrics, anomalies } = analysis;
   const badge = healthBadge(health);
   const contributors = useMemo(() => topOverrunTasks(taskMetrics, 3), [taskMetrics]);
   const names = new Map(document.tasks.map((t) => [t.id, t.name]));
@@ -150,21 +153,14 @@ function Insights({ document, onNavigate }: { document: ProjectDocument; onNavig
         )}
       </Card>
 
-      <section
-        aria-label="Unusual expenses and AI summary"
-        className="rounded-xl border-2 border-dashed border-border-strong p-8"
-      >
-        <p className="flex items-center gap-2 font-mono text-support font-medium tracking-wider text-muted uppercase">
-          <Sparkles size={14} aria-hidden="true" />
-          Coming in Phase 5
-        </p>
-        <h2 className="mt-2 font-display text-section font-medium">
-          Unusual expenses &amp; AI summary
-        </h2>
-        <p className="mt-2 max-w-2xl text-body text-muted">
-          Anomaly detection (AN-01…AN-06) and an AI-written executive summary will appear here.
-        </p>
-      </section>
+      <UnusualExpenses anomalies={anomalies} onNavigate={onNavigate} />
+
+      <AiSummaryPanel
+        document={document}
+        metrics={metrics}
+        taskMetrics={taskMetrics}
+        anomalies={anomalies}
+      />
     </div>
   );
 }

@@ -248,33 +248,33 @@ Core helpers are in `packages/core/tests/phase4-core.test.ts`; chart data builde
 Charts are rendered as canvas stubs in jsdom, so tests check the **data** given to each chart and
 its accessible summary — not pixels (see §7 for the visual checklist).
 
-| ID             | What it checks                                                                                                                    |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| UT-PVB-01…03   | PV baseline: 0 at start, BAC at end, equals PV at the status date, bends at task dates, invalid input                             |
-| UT-PVB-04      | 1,000 tasks: baseline + metrics + insights < 200 ms (NF-01)                                                                       |
-| UT-SNH-01…03   | Previous snapshot, remove, snapshot metrics, trend direction (incl. float noise)                                                  |
-| UT-KPI-01…05   | KPI statuses follow §5 thresholds; N/A → null; overrides; trend semantics                                                         |
-| UT-INO-01/02   | Insight order red → amber → info → green; headline; a tip for every rule                                                          |
-| UT-CAT-01      | Cost variance by category for the worked example                                                                                  |
-| UT-GLO-01      | Every §4 metric has a formula and plain-English meaning                                                                           |
-| UT-CHART-01…05 | S-curve series: PV baseline, EV/AC with live status point, BAC, EAC projection, empty/edge cases                                  |
-| UT-CHART-06/07 | Estimated vs actual: plan / overrun order, bar limit                                                                              |
-| UT-CHART-08/09 | CPI/SPI trend from snapshots; "not enough" below two snapshots                                                                    |
-| UT-CHART-10    | Category variance sorted worst first (Subcontract −31,500 in the sample)                                                          |
-| CT-DASH-01     | Sample project KPIs: CPI 0.87 red, SPI 0.95 amber, CV −74,000, SV −26,926.41, EAC 1,195,161.29, TCPI 1.16, 47.69% complete        |
-| CT-DASH-02     | Trend arrows vs the 2026-03-20 snapshot (CPI down, worse; EAC up, worse)                                                          |
-| CT-DASH-03     | Health panel: "At risk", 47.69% complete vs 54.81% spent, headline IN-03                                                          |
-| CT-DASH-04     | EAC method switch → atypical EAC 1,114,000, saved per project, arrow keys                                                         |
-| CT-DASH-05     | N/A CPI with a keyboard-reachable reason                                                                                          |
-| CT-DASH-06/07  | No project: empty state, "Load sample project", "Create project" opens the form                                                   |
-| CT-DASH-08     | No snapshots: trend message; S-curve still has all five series                                                                    |
-| CT-DASH-09     | Every chart has an aria-label summary and a "how to read" tip                                                                     |
-| CT-DASH-10     | Task results: sort asc/desc, negatives in muted red, status badge, totals row                                                     |
-| CT-DASH-11     | Snapshot history with CPI/SPI; delete with confirmation                                                                           |
-| CT-DASH-12     | Changing the status date recalculates the KPIs                                                                                    |
-| CT-DASH-13     | Formula help panel opens, lists formulas, closes with Esc                                                                         |
-| CT-DASH-14     | All four charts register PNG images for the report                                                                                |
-| CT-INS-01…05   | Insight groups and order, rule IDs, tips; healthy project; contributor links focus the task row; Phase 5 placeholder; empty state |
+| ID             | What it checks                                                                                                                         |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| UT-PVB-01…03   | PV baseline: 0 at start, BAC at end, equals PV at the status date, bends at task dates, invalid input                                  |
+| UT-PVB-04      | 1,000 tasks: baseline + metrics + insights < 200 ms (NF-01)                                                                            |
+| UT-SNH-01…03   | Previous snapshot, remove, snapshot metrics, trend direction (incl. float noise)                                                       |
+| UT-KPI-01…05   | KPI statuses follow §5 thresholds; N/A → null; overrides; trend semantics                                                              |
+| UT-INO-01/02   | Insight order red → amber → info → green; headline; a tip for every rule                                                               |
+| UT-CAT-01      | Cost variance by category for the worked example                                                                                       |
+| UT-GLO-01      | Every §4 metric has a formula and plain-English meaning                                                                                |
+| UT-CHART-01…05 | S-curve series: PV baseline, EV/AC with live status point, BAC, EAC projection, empty/edge cases                                       |
+| UT-CHART-06/07 | Estimated vs actual: plan / overrun order, bar limit                                                                                   |
+| UT-CHART-08/09 | CPI/SPI trend from snapshots; "not enough" below two snapshots                                                                         |
+| UT-CHART-10    | Category variance sorted worst first (Subcontract −31,500 in the sample)                                                               |
+| CT-DASH-01     | Sample project KPIs: CPI 0.87 red, SPI 0.95 amber, CV −74,000, SV −26,926.41, EAC 1,195,161.29, TCPI 1.16, 47.69% complete             |
+| CT-DASH-02     | Trend arrows vs the 2026-03-20 snapshot (CPI down, worse; EAC up, worse)                                                               |
+| CT-DASH-03     | Health panel: "At risk", 47.69% complete vs 54.81% spent, headline IN-03                                                               |
+| CT-DASH-04     | EAC method switch → atypical EAC 1,114,000, saved per project, arrow keys                                                              |
+| CT-DASH-05     | N/A CPI with a keyboard-reachable reason                                                                                               |
+| CT-DASH-06/07  | No project: empty state, "Load sample project", "Create project" opens the form                                                        |
+| CT-DASH-08     | No snapshots: trend message; S-curve still has all five series                                                                         |
+| CT-DASH-09     | Every chart has an aria-label summary and a "how to read" tip                                                                          |
+| CT-DASH-10     | Task results: sort asc/desc, negatives in muted red, status badge, totals row                                                          |
+| CT-DASH-11     | Snapshot history with CPI/SPI; delete with confirmation                                                                                |
+| CT-DASH-12     | Changing the status date recalculates the KPIs                                                                                         |
+| CT-DASH-13     | Formula help panel opens, lists formulas, closes with Esc                                                                              |
+| CT-DASH-14     | All four charts register PNG images for the report                                                                                     |
+| CT-INS-01…05   | Insight groups and order, rule IDs, tips; healthy project; contributor links focus the task row; Phase 5 sections present; empty state |
 
 ## 7. Visual checklist (manual)
 
@@ -288,3 +288,73 @@ Run `npm run dev -w apps/web`, load the sample project and open the Dashboard, i
 4. Category chart: Subcontract and Material bars to the left in muted red.
 5. Tooltips show currency with 2 dp and indices with 2 dp; hover and keyboard focus on the info icons.
 6. Dark mode: all chart text, gridlines and the lime highlight line are readable.
+
+# Test cases — Unusual expenses, AI proxy and AI summary (Phase 5)
+
+Core: `packages/core/tests/aiSummary.test.ts`. Proxy: `apps/ai-proxy/tests/*.test.ts` (Vitest +
+supertest; the Gemini call is injected as a mock, and `@google/genai` is mocked for the adapter
+test). Web: `apps/web/src/test/anomalies.test.tsx` and `aiSummary.test.tsx` (`fetch` and
+`VITE_AI_PROXY_URL` stubbed).
+
+## 8. Core
+
+| ID           | What it checks                                                                                              |
+| ------------ | ----------------------------------------------------------------------------------------------------------- |
+| UT-AN-09     | Anomalies sorted high → medium → low; counts per severity                                                   |
+| UT-AN-10     | Task anomalies grouped by task ID; snapshot-only ones skipped                                               |
+| UT-AI-01-P/F | Summary request is valid, has no task table, < 20 KB; extra fields, bad types, Infinity and long lists fail |
+| UT-AI-02     | Task names truncated to 60 characters in insight text (SR-08)                                               |
+| UT-AI-03     | Anomalies capped at 25 (most severe first) with full counts                                                 |
+| UT-AI-04     | Fingerprint stable for the same data, changes when data changes ("Out of date")                             |
+| UT-AI-05-P/F | AI response: ≤ 120 words, 2–4 risks, exactly 3 recommendations                                              |
+| UT-AI-06     | Word counting                                                                                               |
+| UT-AI-07…10  | Offline summary for a red, a healthy and an empty project; 4-risk cap; N/A wording (FR-34)                  |
+| UT-PF-07-P/F | Stored summary round-trips in `.evm.json`; a damaged one is dropped with an FR-35 warning                   |
+
+## 9. AI proxy
+
+| ID       | What it checks                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------------ |
+| PT-01/02 | Valid request → parsed summary + model; CORS header for the allowed origin; fenced JSON accepted |
+| PT-03    | Body > 20 KB → 413, model not called                                                             |
+| PT-04    | Bad JSON, wrong types, extra fields, raw tasks, non-JSON content type → 400                      |
+| PT-05/06 | Other origin or no origin → 403, no CORS header; preflight only for the allowed origin           |
+| PT-07    | 11th request in a minute → friendly 429                                                          |
+| PT-08    | Model slower than the timeout → 504 and the call is aborted                                      |
+| PT-09    | Non-JSON, empty, wrong-shape or > 120-word answer → 502                                          |
+| PT-10    | Model error → generic 502; details only in the log                                               |
+| PT-11…13 | Health reveals no config; Helmet headers, no `X-Powered-By`; generic 404                         |
+| PT-14    | The API key appears in no response body or header and is redacted from logs (SR-01)              |
+| PT-20/21 | Missing `GEMINI_MODEL` fails with a clear message; all problems listed; no values printed        |
+| PT-22/23 | System instruction text; prompt = rules + request JSON only, `<` escaped (SR-08)                 |
+| PT-24    | SDK called with model, system instruction, JSON schema and abort signal                          |
+| PT-25    | Logger redacts secrets                                                                           |
+
+## 10. Web
+
+| ID           | What it checks                                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| CT-ANO-01    | Table: rule ID (mono), task (mono), severity badge, reason; high first                                                         |
+| CT-ANO-02    | Count badges by severity                                                                                                       |
+| CT-ANO-03    | Row click or its button → Data page, task row focused and highlighted                                                          |
+| CT-ANO-04    | AN-04 snapshot row shows the date and is not a link                                                                            |
+| CT-ANO-05    | Empty state "No unusual expenses found" with a success badge                                                                   |
+| CT-ANO-06/07 | Warning icon + tooltip with the reason on Data and Dashboard task rows; tooltip uses fixed position so the table can't clip it |
+| CT-AI-01     | Success: lime button, AI label + time, three sections, aggregated request only, saved with the project                         |
+| CT-AI-02     | Skeleton + `aria-busy`; 20 s timeout → offline summary + Retry; Retry succeeds                                                 |
+| CT-AI-03…07  | 429, 500, network failure, invalid response, no proxy URL → offline summary with a reason, no raw error                        |
+| CT-AI-08     | `<script>`, `<img onerror>` and links in AI text render as plain text (SR-03)                                                  |
+| CT-AI-09     | Cancel aborts the request                                                                                                      |
+| CT-AI-10/11  | Stored summary loads; "Out of date" after the data changes; regenerating clears it                                             |
+| CT-AI-12     | Client maps 504 / 502 / 403 / bad JSON / cancel to reasons and never throws                                                    |
+
+Manual check with a dummy key against the real SDK (Phase 5): Google rejected the key, the client
+received the generic 502 and the key did not appear in the log. With a real key, follow the
+README "AI summary" section.
+
+## 11. Visual checklist additions (manual, both themes)
+
+1. Insights → Unusual expenses: count badges, severity badges and the row hover are readable.
+2. Data and Dashboard: the warning icon on rows 3.1 / 3.2 and its tooltip near the bottom of the
+   table are fully visible.
+3. AI summary: skeleton lines while loading, labels and "Out of date" badge are readable.
