@@ -6,11 +6,12 @@ import type { TrendData } from '../../lib/chartData';
 import { useRegisterChart } from '../../state/chartImages';
 import { ChartCard, ChartMessage } from './ChartCard';
 import { healthyZonePlugin } from './chartSetup';
-import { useChartPalette, withAlpha } from './palette';
+import { useChartPalette, useChartPixelRatio, withAlpha } from './palette';
 
 /** FR-22: CPI and SPI over snapshots, with a 1.0 reference line and a healthy zone ≥ 1.0. */
 export function TrendChart({ data }: { data: TrendData }) {
   const palette = useChartPalette();
+  const pixelRatio = useChartPixelRatio();
   const ref = useRef<Chart<'line'> | null>(null);
   useRegisterChart('cpi-spi-trend', ref);
 
@@ -56,6 +57,7 @@ export function TrendChart({ data }: { data: TrendData }) {
 
   const options = useMemo<ChartOptions<'line'>>(
     () => ({
+      devicePixelRatio: pixelRatio,
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
@@ -84,7 +86,7 @@ export function TrendChart({ data }: { data: TrendData }) {
         healthyZone: { from: 1, color: withAlpha(palette.success, 0.1) },
       },
     }),
-    [palette],
+    [pixelRatio, palette],
   );
 
   return (

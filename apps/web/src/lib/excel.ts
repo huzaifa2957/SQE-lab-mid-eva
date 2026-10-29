@@ -13,7 +13,7 @@ import type { CellValue, Workbook, Worksheet } from 'exceljs';
 
 type ExcelModule = typeof import('exceljs');
 
-async function loadExcel(): Promise<ExcelModule> {
+export async function loadExcel(): Promise<ExcelModule> {
   const mod = (await import('exceljs')) as ExcelModule & { default?: ExcelModule };
   return mod.Workbook ? mod : mod.default!;
 }

@@ -5,8 +5,8 @@ import type { ProjectStorage } from './lib/storage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { DataPage } from './pages/data/DataPage';
 import { InsightsPage } from './pages/insights/InsightsPage';
-import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
+import { ReportPage } from './pages/report/ReportPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ChartImagesProvider } from './state/ChartImagesProvider';
 import { type Navigate, type PageId, type PageParams, useHashRoute } from './state/navigation';
@@ -47,7 +47,7 @@ function CurrentPage({
     case 'insights':
       return <InsightsPage onNavigate={navigate} />;
     case 'report':
-      return <PlaceholderPage title="Report" phase={6} description="PDF, Excel and CSV reports." />;
+      return <ReportPage onNavigate={navigate} />;
     case 'settings':
       return <SettingsPage />;
   }

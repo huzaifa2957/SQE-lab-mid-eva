@@ -2,3 +2,6 @@
 *.xlsx binary
 *.png binary
 *.ico binary
+*.pdf binary
+# Generated report samples are kept byte-for-byte (CSV uses CRLF + BOM).
+docs/sample-reports/** binary

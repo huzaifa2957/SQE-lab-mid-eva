@@ -34,15 +34,16 @@ Data is stored in the browser (IndexedDB). Use **Save project file** to keep a p
 
 ## Scripts
 
-| Command                        | What it does                                          |
-| ------------------------------ | ----------------------------------------------------- |
-| `npm run lint`                 | ESLint (zero warnings allowed)                        |
-| `npm run format:check`         | Prettier check                                        |
-| `npm run typecheck`            | `tsc` in every workspace                              |
-| `npm run test`                 | Vitest across core, web and ai-proxy                  |
-| `npm run test:coverage`        | Tests with V8 coverage (NF-04)                        |
-| `npm run build -w apps/web`    | Production web build to `apps/web/dist`               |
-| `npm run dev -w apps/ai-proxy` | AI proxy on http://localhost:3001 (reloads on change) |
+| Command                        | What it does                                                         |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `npm run lint`                 | ESLint (zero warnings allowed)                                       |
+| `npm run format:check`         | Prettier check                                                       |
+| `npm run typecheck`            | `tsc` in every workspace                                             |
+| `npm run test`                 | Vitest across core, web and ai-proxy                                 |
+| `npm run test:coverage`        | Tests with V8 coverage (NF-04)                                       |
+| `npm run build -w apps/web`    | Production web build to `apps/web/dist`                              |
+| `npm run sample-reports`       | Rebuild and regenerate `docs/sample-reports/` (needs Edge or Chrome) |
+| `npm run dev -w apps/ai-proxy` | AI proxy on http://localhost:3001 (reloads on change)                |
 
 ## Configuration
 
@@ -50,6 +51,22 @@ Data is stored in the browser (IndexedDB). Use **Save project file** to keep a p
 - `apps/web/.env.example` → copy to `apps/web/.env.local`: the web app's public settings.
 
 API keys never go in client code or Git (SR-01). `.env` files are git-ignored.
+
+## Reports
+
+The **Report** page downloads the current project as:
+
+- **PDF** — A4 report with a cover page, KPI table, the four charts (always in the light theme),
+  task table, insights, unusual expenses, AI summary, snapshot history and a formula appendix.
+  Uses Helvetica (jsPDF's built-in font); DM Sans / Space Grotesk are not embedded because only
+  WOFF files are available and jsPDF needs TTF.
+- **Excel** — Summary, Tasks, Snapshots, Insights, Anomalies and AI Summary sheets with real
+  numbers and number formats.
+- **CSV** — the computed task table (UTF-8 with BOM).
+
+Files are named `EVM_<project>_<statusDate>.<ext>`. Text that starts with `= + - @` is prefixed with
+`'` so spreadsheets never run it as a formula (SR-04). Examples are in
+[docs/sample-reports](docs/sample-reports).
 
 ## AI summary (optional)
 

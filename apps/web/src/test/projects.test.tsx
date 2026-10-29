@@ -95,7 +95,7 @@ describe('Projects page (FR-01, FR-09)', () => {
     const nav = within(screen.getByRole('navigation', { name: 'Main' }));
     expect(nav.getByRole('button', { name: 'Projects' })).toHaveAttribute('aria-current', 'page');
     await user.click(nav.getByRole('button', { name: 'Report' }));
-    expect(screen.getByText('Coming in Phase 6')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Report', level: 1 })).toBeInTheDocument();
     expect(nav.getByRole('button', { name: 'Report' })).toHaveAttribute('aria-current', 'page');
   });
 });

@@ -1,7 +1,7 @@
 // Chart colours read from the design tokens (docs/design-system.md §9), so charts switch
 // with light/dark mode. Fallbacks (light palette) are used when CSS variables are unavailable.
 
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { useTheme } from '../../state/ThemeProvider';
 
 export interface ChartPalette {
@@ -18,7 +18,7 @@ export interface ChartPalette {
   card: string;
 }
 
-const FALLBACK: ChartPalette = {
+const FALLBACK: Readonly<ChartPalette> = {
   text: '#17241c',
   muted: '#5b685f',
   grid: '#d8ded3',
@@ -54,10 +54,28 @@ export function readPalette(theme: 'light' | 'dark'): ChartPalette {
   };
 }
 
-/** Re-reads the palette whenever the theme changes. */
+/** Light-mode token values, used for print (PDF reports always use the light palette). */
+export const LIGHT_CHART_PALETTE: Readonly<ChartPalette> = FALLBACK;
+
+/**
+ * Overrides for charts rendered for export (Phase 6): a fixed palette and a higher pixel
+ * ratio so the PNG images are sharp in print. Null on screen.
+ */
+export const ChartRenderContext = createContext<{
+  palette: ChartPalette;
+  devicePixelRatio: number;
+} | null>(null);
+
+/** Re-reads the palette whenever the theme changes (or uses the export override). */
 export function useChartPalette(): ChartPalette {
   const { theme } = useTheme();
-  return useMemo(() => readPalette(theme), [theme]);
+  const override = useContext(ChartRenderContext);
+  return useMemo(() => override?.palette ?? readPalette(theme), [override, theme]);
+}
+
+/** Device pixel ratio for export renders; undefined uses the screen's ratio. */
+export function useChartPixelRatio(): number | undefined {
+  return useContext(ChartRenderContext)?.devicePixelRatio;
 }
 
 /** Adds transparency to a #rrggbb colour. */

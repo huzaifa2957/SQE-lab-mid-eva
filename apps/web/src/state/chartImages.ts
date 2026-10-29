@@ -1,4 +1,4 @@
-// Registry of rendered charts so their PNG images can be collected for the PDF report (Phase 6).
+// Registry of rendered charts so their PNG images can be collected for the PDF report (FR-40).
 
 import { createContext, type RefObject, useContext, useEffect } from 'react';
 
@@ -37,4 +37,26 @@ export function useRegisterChart(id: ChartId, ref: RefObject<ChartImageSource | 
       }
     });
   }, [images, id, ref]);
+}
+
+/** A registry of rendered charts. The Report page keeps its own for the print copies. */
+export function createChartRegistry(): ChartImages {
+  const getters = new Map<ChartId, () => string | null>();
+  return {
+    register(id, getImage) {
+      getters.set(id, getImage);
+      return () => {
+        if (getters.get(id) === getImage) getters.delete(id);
+      };
+    },
+    getImage: (id) => getters.get(id)?.() ?? null,
+    getAll() {
+      const all: Partial<Record<ChartId, string>> = {};
+      for (const [id, get] of getters) {
+        const image = get();
+        if (image) all[id] = image;
+      }
+      return all;
+    },
+  };
 }

@@ -358,3 +358,57 @@ README "AI summary" section.
 2. Data and Dashboard: the warning icon on rows 3.1 / 3.2 and its tooltip near the bottom of the
    table are fully visible.
 3. AI summary: skeleton lines while loading, labels and "Out of date" badge are readable.
+
+# Test cases — Reports (Phase 6)
+
+Core: `packages/core/tests/exportSafety.test.ts`. Builders: `apps/web/src/test/reports.test.ts`
+(Node environment: the Excel workbook is read back with ExcelJS; the PDF is generated uncompressed
+and its text is checked, not its visuals). Page: `apps/web/src/test/reportPage.test.tsx`.
+
+## 12. Core
+
+| ID           | What it checks                                                                           |
+| ------------ | ---------------------------------------------------------------------------------------- |
+| UT-SR04-01-F | Text starting with = + - @ tab or CR gets a leading `'`                                  |
+| UT-SR04-01-P | Safe text, numbers (also negative), booleans and empty cells are unchanged               |
+| UT-SR04-02   | Every name in `samples/invalid_formula_injection.csv` is neutralised; HTML stays literal |
+| UT-CSV-01    | CSV: BOM, CRLF, quoting of commas, quotes and line breaks; numbers unquoted              |
+| UT-CSV-02    | Formula text is escaped and reads back as the same literal text                          |
+| UT-FN-01-P   | `EVM_<project>_<statusDate>.<ext>`                                                       |
+| UT-FN-01-F   | Windows-invalid characters and path parts removed; stem ≤ 80; fallbacks                  |
+
+## 13. Report builders
+
+| ID        | What it checks                                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- |
+| UT-RPT-01 | Report data comes from core; warnings for no tasks and an out-of-date AI summary                                          |
+| UT-RPT-02 | Excel sheets Summary, Tasks, Snapshots, Insights, Anomalies, AI Summary; header forest green / white, frozen, auto filter |
+| UT-RPT-03 | Sample project values: numbers with `#,##0.00`, `0.00%` (as fractions) and `0.00`; status text; N/A; anomaly flags        |
+| UT-RPT-04 | Switched-off sections are left out of the workbook                                                                        |
+| UT-RPT-05 | Injection names stored as plain text (escaped), no formula cells; budgets still numbers                                   |
+| UT-RPT-06 | CSV: BOM, headers with currency, one row per task, 2 dp numbers                                                           |
+| UT-RPT-07 | CSV: injection names escaped, numbers not                                                                                 |
+| UT-RPT-08 | PDF builds; every section heading, health, page numbers, footer and A4 portrait page size present                         |
+| UT-RPT-09 | PDF: N/A for nulls, AI label + "Out of date", switched-off sections omitted                                               |
+| UT-RPT-10 | Text mapped to characters Helvetica can draw (→, Σ, −, ≥)                                                                 |
+
+## 14. Report page
+
+| ID        | What it checks                                                                                                 |
+| --------- | -------------------------------------------------------------------------------------------------------------- |
+| CT-RPT-01 | Title, lime "Download PDF", secondary Excel / CSV; 8 sections on; preview headings and key numbers             |
+| CT-RPT-02 | Unticking a section removes it from the preview and the PDF                                                    |
+| CT-RPT-03 | PDF download: valid `%PDF`, correct file name, success toast                                                   |
+| CT-RPT-04 | CSV (with BOM) and Excel downloads with correct names and types                                                |
+| CT-RPT-05 | "Generating PDF…" progress, buttons disabled; failure → clear toast, no raw error, no crash                    |
+| CT-RPT-06 | Warnings (no tasks, out-of-date AI summary) shown and confirmed before export; export allowed                  |
+| CT-RPT-07 | Four charts rendered off-screen (hidden, inert) in the light theme even in dark mode; images passed to the PDF |
+| CT-RPT-08 | No project → empty state                                                                                       |
+
+## 15. Sample reports (manual)
+
+`npm run sample-reports` builds the web app and uses an installed Edge or Chrome (via
+`playwright-core`) to load the sample project, generate an offline summary and download the PDF,
+Excel and CSV into `docs/sample-reports/`. Checked by eye in Phase 6: cover band and lime line,
+KPI status text, all four charts drawn in the light theme, red negatives, repeated table headers,
+N/A cells, footer with page numbers; Excel formats, frozen headers and filters.

@@ -6,7 +6,7 @@ import { dayLabel, type SCurveData } from '../../lib/chartData';
 import { useRegisterChart } from '../../state/chartImages';
 import { ChartCard } from './ChartCard';
 import { statusLinePlugin } from './chartSetup';
-import { useChartPalette } from './palette';
+import { useChartPalette, useChartPixelRatio } from './palette';
 
 interface SCurveChartProps {
   data: SCurveData;
@@ -17,6 +17,7 @@ interface SCurveChartProps {
 /** FR-20: cumulative PV (baseline), EV and AC, BAC line, EAC projection and status date. */
 export function SCurveChart({ data, currency, statusDate }: SCurveChartProps) {
   const palette = useChartPalette();
+  const pixelRatio = useChartPixelRatio();
   const ref = useRef<Chart<'line'> | null>(null);
   useRegisterChart('s-curve', ref);
 
@@ -79,6 +80,7 @@ export function SCurveChart({ data, currency, statusDate }: SCurveChartProps) {
 
   const options = useMemo<ChartOptions<'line'>>(
     () => ({
+      devicePixelRatio: pixelRatio,
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'nearest', intersect: false },
@@ -118,7 +120,7 @@ export function SCurveChart({ data, currency, statusDate }: SCurveChartProps) {
         },
       },
     }),
-    [palette, currency, data.statusDay, statusDate],
+    [pixelRatio, palette, currency, data.statusDay, statusDate],
   );
 
   return (

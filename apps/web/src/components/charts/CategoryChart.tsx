@@ -6,11 +6,12 @@ import type { CategoryData } from '../../lib/chartData';
 import { useRegisterChart } from '../../state/chartImages';
 import { ChartCard, ChartMessage } from './ChartCard';
 import './chartSetup';
-import { useChartPalette } from './palette';
+import { useChartPalette, useChartPixelRatio } from './palette';
 
 /** FR-23: cost variance (EV − AC) by category; bars right of zero are good, left are over budget. */
 export function CategoryChart({ data, currency }: { data: CategoryData; currency: string }) {
   const palette = useChartPalette();
+  const pixelRatio = useChartPixelRatio();
   const ref = useRef<Chart<'bar'> | null>(null);
   useRegisterChart('variance-by-category', ref);
 
@@ -33,6 +34,7 @@ export function CategoryChart({ data, currency }: { data: CategoryData; currency
 
   const options = useMemo<ChartOptions<'bar'>>(
     () => ({
+      devicePixelRatio: pixelRatio,
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
@@ -60,7 +62,7 @@ export function CategoryChart({ data, currency }: { data: CategoryData; currency
         },
       },
     }),
-    [palette, currency],
+    [pixelRatio, palette, currency],
   );
 
   return (

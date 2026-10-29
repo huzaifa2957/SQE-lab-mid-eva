@@ -7,7 +7,7 @@ import { useRegisterChart } from '../../state/chartImages';
 import { SegmentedControl } from '../ui/SegmentedControl';
 import { ChartCard, ChartMessage } from './ChartCard';
 import './chartSetup';
-import { useChartPalette, withAlpha } from './palette';
+import { useChartPalette, useChartPixelRatio, withAlpha } from './palette';
 
 interface CostByTaskChartProps {
   data: CostByTaskData;
@@ -19,6 +19,7 @@ interface CostByTaskChartProps {
 /** FR-21: estimated vs actual cost per task. Estimated = outlined bars, actual = solid bars. */
 export function CostByTaskChart({ data, currency, sort, onSortChange }: CostByTaskChartProps) {
   const palette = useChartPalette();
+  const pixelRatio = useChartPixelRatio();
   const ref = useRef<Chart<'bar'> | null>(null);
   useRegisterChart('cost-by-task', ref);
 
@@ -49,6 +50,7 @@ export function CostByTaskChart({ data, currency, sort, onSortChange }: CostByTa
 
   const options = useMemo<ChartOptions<'bar'>>(
     () => ({
+      devicePixelRatio: pixelRatio,
       responsive: true,
       maintainAspectRatio: false,
       scales: {
@@ -79,7 +81,7 @@ export function CostByTaskChart({ data, currency, sort, onSortChange }: CostByTa
         },
       },
     }),
-    [palette, currency, data.ids, data.names],
+    [pixelRatio, palette, currency, data.ids, data.names],
   );
 
   return (

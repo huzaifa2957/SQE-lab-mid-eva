@@ -1,5 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { loadExcel } from '../lib/excel';
 import invalidPercent from '../../../../samples/invalid_percent_over_100.csv?raw';
 import sampleTasks from '../../../../samples/sample_project.csv?raw';
 import { makeDocument, renderApp } from './render';
@@ -14,6 +15,10 @@ async function openImport() {
 }
 
 describe('file import preview (FR-03, FR-05, FR-06)', () => {
+  // ExcelJS is large and loaded on demand; under coverage its first load can take most of a
+  // minute. Load it once here so the tests below measure behaviour, not module loading.
+  beforeAll(() => loadExcel(), 120_000);
+
   it('CT-IMP-01 a valid sample file previews with no errors and imports (with confirm + undo)', async () => {
     const { user, dialog } = await openImport();
     await user.upload(
@@ -85,13 +90,12 @@ describe('file import preview (FR-03, FR-05, FR-06)', () => {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
     await user.upload(dialog.getByLabelText('Upload task file'), fake);
-    // ExcelJS is loaded on demand, which can take a moment the first time.
     expect(
       await dialog.findByText(/"broken.xlsx" could not be read as an Excel workbook/, undefined, {
         timeout: 10_000,
       }),
     ).toBeInTheDocument();
-  }, 20_000);
+  });
 
   it('CT-IMP-05 fraction-like percentages need confirmation before import (VR-07)', async () => {
     const { user, dialog } = await openImport();
