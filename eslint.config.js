@@ -43,9 +43,9 @@ export default tseslint.config(
     },
   },
 
-  // apps/ai-proxy: Node server
+  // Node code: AI proxy, Electron main process and scripts, shared platform package
   {
-    files: ['apps/ai-proxy/**/*.ts'],
+    files: ['apps/ai-proxy/**/*.ts', 'apps/desktop/**/*.{ts,mjs}', 'packages/platform/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
 

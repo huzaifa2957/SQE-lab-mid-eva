@@ -1,16 +1,13 @@
 // POST /api/summary logic, independent of Express so the same code runs on Replit and
-// Vercel. Validates the request, calls the model with a timeout and validates the answer.
+// Vercel. Validates the request; the shared @evm/platform/ai code calls the model with a
+// timeout and validates the answer.
 
-import { AiSummarySchema, type SummaryRequest, SummaryRequestSchema } from '@evm/core/ai';
+import { SummaryRequestSchema } from '@evm/core/ai';
+import { type GenerateSummary, generateSummary, type SummaryFailure } from '@evm/platform/ai';
 import type { Logger } from './logger';
 
-/** Returns the model's raw text (expected to be JSON). */
-export type GenerateSummary = (
-  request: SummaryRequest,
-  signal: AbortSignal,
-) => Promise<string | undefined>;
-
-export const SUMMARY_TIMEOUT_MS = 20_000;
+export type { GenerateSummary } from '@evm/platform/ai';
+export { SUMMARY_TIMEOUT_MS } from '@evm/platform/ai';
 
 /** Generic messages sent to the client (SR-02). Details stay in the server log. */
 export const MESSAGES = Object.freeze({
@@ -36,16 +33,12 @@ export interface HandlerDeps {
   timeoutMs?: number;
 }
 
-const TIMED_OUT = Symbol('timed out');
-
-/** Parses the model text as JSON, tolerating a ```json fence. */
-function parseJson(text: string): unknown {
-  const unfenced = text
-    .trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/, '');
-  return JSON.parse(unfenced);
-}
+const STATUS: Record<SummaryFailure, { status: number; error: string }> = {
+  timeout: { status: 504, error: MESSAGES.timeout },
+  network: { status: 502, error: MESSAGES.badGateway },
+  upstream: { status: 502, error: MESSAGES.badGateway },
+  'invalid-output': { status: 502, error: MESSAGES.badGateway },
+};
 
 export async function handleSummary(body: unknown, deps: HandlerDeps): Promise<HandlerResult> {
   const request = SummaryRequestSchema.safeParse(body);
@@ -58,46 +51,10 @@ export async function handleSummary(body: unknown, deps: HandlerDeps): Promise<H
     );
     return { status: 400, body: { error: MESSAGES.invalidRequest } };
   }
-
-  const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<typeof TIMED_OUT>((resolve) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      resolve(TIMED_OUT);
-    }, deps.timeoutMs ?? SUMMARY_TIMEOUT_MS);
-  });
-
-  let text: string | undefined;
-  try {
-    const result = await Promise.race([deps.generate(request.data, controller.signal), timeout]);
-    if (result === TIMED_OUT) {
-      deps.log.error('Gemini call timed out');
-      return { status: 504, body: { error: MESSAGES.timeout } };
-    }
-    text = result;
-  } catch (error) {
-    deps.log.error('Gemini call failed', error);
-    return { status: 502, body: { error: MESSAGES.badGateway } };
-  } finally {
-    clearTimeout(timer);
+  const outcome = await generateSummary(request.data, deps);
+  if (!outcome.ok) {
+    const { status, error } = STATUS[outcome.failure];
+    return { status, body: { error } };
   }
-
-  let json: unknown;
-  try {
-    json = parseJson(text ?? '');
-  } catch {
-    deps.log.error('Gemini returned text that is not JSON');
-    return { status: 502, body: { error: MESSAGES.badGateway } };
-  }
-  const summary = AiSummarySchema.safeParse(json);
-  if (!summary.success) {
-    deps.log.error(
-      `Gemini response did not match the schema: ${summary.error.issues
-        .map((i) => `${i.path.join('.') || '(root)'} ${i.message}`)
-        .join('; ')}`,
-    );
-    return { status: 502, body: { error: MESSAGES.badGateway } };
-  }
-  return { status: 200, body: { summary: summary.data, model: deps.model } };
+  return { status: 200, body: { summary: outcome.summary, model: deps.model } };
 }

@@ -5,12 +5,13 @@ Earned Value Management cost-control tool: a static web app and an Electron desk
 ## Structure
 
 ```
-packages/core   pure TS: formulas, validation, insights, anomalies
-apps/web        React + Vite + Tailwind (static build)
-apps/desktop    Electron shell (Phase 7)
-apps/ai-proxy   Gemini proxy: Express server + Vercel functions
-samples/        templates and test files
-docs/           SRS, test plan, traceability
+packages/core      pure TS: formulas, validation, insights, anomalies
+packages/platform  shared AI prompt/validation + the desktop bridge contract
+apps/web           React + Vite + Tailwind (static build)
+apps/desktop       Electron app around the web build (Windows installer)
+apps/ai-proxy      Gemini proxy: Express server + Vercel functions
+samples/           templates and test files
+docs/              SRS, test plan, traceability
 ```
 
 ## Getting started
@@ -67,6 +68,31 @@ The **Report** page downloads the current project as:
 Files are named `EVM_<project>_<statusDate>.<ext>`. Text that starts with `= + - @` is prefixed with
 `'` so spreadsheets never run it as a formula (SR-04). Examples are in
 [docs/sample-reports](docs/sample-reports).
+
+## Desktop app (Windows)
+
+`apps/desktop` wraps the same web build in Electron. It works offline (except the AI summary),
+uses native Open/Save dialogs for project files and reports, and keeps auto-saving to the
+app's own storage.
+
+```sh
+npm install
+npm run dev -w apps/desktop      # web dev server + Electron, with dev tools
+npm run build -w apps/desktop    # builds apps/web, then the desktop bundles into apps/desktop/dist
+npm run test:e2e -w apps/desktop # Playwright smoke test against the built app
+npm run dist -w apps/desktop     # Windows installer → apps/desktop/release/EVM-Cost-Tracker-Setup-<version>.exe
+```
+
+The installer is **not code-signed**, so Windows SmartScreen may show "Windows protected your PC".
+Click **More info → Run anyway**. There is no auto-update; install a newer `.exe` over the old one.
+
+**AI on desktop:** open **Settings → Desktop: Gemini API key**, enter the model name and your key,
+then **Save key** and **Test connection**. The key is encrypted with your Windows account
+(Electron `safeStorage`) in `%APPDATA%\EVM Cost Tracker\settings.json` and is never shown again
+— only "Key saved ••••1234". Without a key, or offline, the rule-based summary is used.
+
+**Logs:** Help → Open log folder (`%APPDATA%\EVM Cost Tracker\logs`). Errors and key actions
+only, no keys or project data; rotated at 1 MB.
 
 ## AI summary (optional)
 

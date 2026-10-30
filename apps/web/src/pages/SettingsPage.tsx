@@ -3,8 +3,10 @@ import { Card } from '../components/ui/Card';
 import { cx } from '../components/ui/cx';
 import { Select } from '../components/ui/Field';
 import { PageHeader } from '../components/ui/PageHeader';
+import { getPlatform } from '../platform';
 import { useProjects } from '../state/ProjectStore';
 import { type ThemePreference, useTheme } from '../state/ThemeProvider';
+import { DesktopAiSettings } from './DesktopAiSettings';
 
 const THEMES: { value: ThemePreference; label: string; hint: string }[] = [
   { value: 'system', label: 'System', hint: 'Follow the operating system setting' },
@@ -21,6 +23,8 @@ const EAC_METHODS: { value: EacMethod; label: string }[] = [
 export function SettingsPage() {
   const { preference, setPreference } = useTheme();
   const { current, updateCurrent } = useProjects();
+  // FR-52: only in the Electron app (window.evmDesktop exists).
+  const desktop = getPlatform().desktop;
 
   return (
     <div className="flex flex-col gap-6">
@@ -73,6 +77,8 @@ export function SettingsPage() {
             <p className="text-control text-muted">Select a project to choose its EAC method.</p>
           )}
         </Card>
+
+        {desktop && <DesktopAiSettings bridge={desktop} />}
       </div>
     </div>
   );

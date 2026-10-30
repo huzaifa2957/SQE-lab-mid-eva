@@ -412,3 +412,50 @@ and its text is checked, not its visuals). Page: `apps/web/src/test/reportPage.t
 Excel and CSV into `docs/sample-reports/`. Checked by eye in Phase 6: cover band and lime line,
 KPI status text, all four charts drawn in the light theme, red negatives, repeated table headers,
 N/A cells, footer with page numbers; Excel formats, frozen headers and filters.
+
+# Test cases — Desktop app (Phase 7)
+
+Unit: `apps/desktop/tests/*.test.ts` (Node, no Electron: Electron objects are faked;
+`safeStorage` is mocked). Web: `apps/web/src/test/platform.test.tsx` (fake `window.evmDesktop`).
+E2E: `apps/desktop/e2e/smoke.spec.ts` (Playwright launches the built Electron app).
+
+## 16. Desktop main process
+
+| ID            | What it checks                                                                                                                                                    |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UT-IPC-01     | Exactly the bridge channels are registered                                                                                                                        |
+| UT-IPC-02-P   | Valid messages are handled; the key never reaches the log                                                                                                         |
+| UT-IPC-02-F   | Untrusted senders, extra arguments/fields, wrong types, paths in file names, oversize or empty data, unknown report kinds are rejected (17 cases)                 |
+| UT-IPC-03     | A failing handler returns a generic error; details only in the log                                                                                                |
+| UT-DLG-01…05  | Save dialogs use FR-43 names and the right filter per kind; cancel saves nothing; open reads the file (not if > 5 MB); missing extension added                    |
+| UT-SET-01…04  | Defaults; key saved encrypted (never in the file or in `get()`), refused when the OS can't encrypt; keep/remove; damaged file and undecryptable key handled       |
+| UT-LOG-01…03  | Timestamped lines, keys/secrets redacted; rotation at the limit; never throws                                                                                     |
+| UT-DAI-01…04  | Main-process AI: success; no key/model/offline → fallback without calling the model; timeout/network/API error/bad output reasons; Test connection messages       |
+| UT-SEC-01…06  | App-only URLs; https-only external links; navigation/redirect/webview/new window blocked; permissions denied; no path traversal from `app://`; strict CSP headers |
+| UT-MENU-01/02 | File/View/Help items, no dev tools in production; items send their commands                                                                                       |
+
+## 17. Web platform adapter
+
+| ID         | What it checks                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------- |
+| CT-PLAT-01 | No bridge → browser downloads, file input, proxy AI, no desktop settings                  |
+| CT-PLAT-02 | With the bridge, reports and project files use native Save dialogs (bytes, BOM kept)      |
+| CT-PLAT-03 | Cancelled Save dialog → no success message                                                |
+| CT-PLAT-04 | "Open project file" uses the native dialog; the file is still validated by core           |
+| CT-PLAT-05 | Desktop settings: validation, save key (field cleared, only ••••1234 shown), test, remove |
+| CT-PLAT-06 | AI summary through the main process; no key → offline fallback, no network call           |
+| CT-PLAT-07 | Menu commands: toggle theme, export report, save project, open project (repeatable)       |
+
+## 18. Electron smoke test
+
+| ID          | What it checks                                                                                                                                      |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E2E-DESK-01 | Loads `app://evm/index.html`; contextIsolation, no nodeIntegration, sandbox, webSecurity; only `window.evmDesktop` exposed (no `require`/`process`) |
+| E2E-DESK-02 | Sample project loads; dashboard CPI 0.87 (EV 496,000 ÷ AC 570,000)                                                                                  |
+| E2E-DESK-03 | Settings shows the desktop Gemini key section                                                                                                       |
+| E2E-DESK-04 | Navigation to another site and `window.open` are blocked                                                                                            |
+
+Manual (Phase 7): `npm run dist -w apps/desktop` built `EVM-Cost-Tracker-Setup-0.7.0.exe`;
+the packaged `EVM Cost Tracker.exe` opened its window and logged "Page loaded" from `app://evm`.
+(Playwright can't attach to the packaged build because it drives Electron through Node's
+inspector, which release builds usually turn off.)

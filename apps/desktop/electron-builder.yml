@@ -1,0 +1,32 @@
+# FR-53: Windows installer (NSIS). Unsigned and without auto-update by design — see README.
+appId: com.evmcosttracker.desktop
+productName: EVM Cost Tracker
+copyright: Copyright © 2026 Rai Sardar Ahmed
+directories:
+  output: release
+  buildResources: build
+# main.cjs, preload.cjs and the web build are self-contained (bundled by scripts/build.mjs),
+# so no node_modules are packed.
+files:
+  - dist/**/*
+  - package.json
+  - '!node_modules/**/*'
+asar: true
+npmRebuild: false
+publish: null
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  artifactName: EVM-Cost-Tracker-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: EVM Cost Tracker
+  uninstallDisplayName: EVM Cost Tracker
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico

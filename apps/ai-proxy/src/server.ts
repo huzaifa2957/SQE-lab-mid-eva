@@ -2,7 +2,7 @@
 
 import { createApp } from './app';
 import { ConfigError, loadConfig } from './config';
-import { createGeminiGenerator } from './gemini';
+import { createGeminiGenerator } from '@evm/platform/ai';
 import { createLogger } from './logger';
 
 // Load the repo-root .env when present (Replit Secrets / real env vars take precedence).

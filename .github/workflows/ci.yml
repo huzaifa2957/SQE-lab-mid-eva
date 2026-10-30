@@ -25,6 +25,9 @@ jobs:
 
       - name: Install
         run: npm ci
+        env:
+          # Unit tests don't launch Electron; the Electron smoke test runs locally (Phase 7).
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Lint
         run: npm run lint

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { DesktopMenuBridge } from './components/DesktopMenuBridge';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AppShell } from './components/layout/AppShell';
 import type { ProjectStorage } from './lib/storage';
@@ -59,6 +60,7 @@ export default function App({ storage }: { storage: ProjectStorage }) {
     <Providers storage={storage}>
       <AppShell page={page} onNavigate={navigate}>
         <CurrentPage page={page} navigate={navigate} params={params} />
+        <DesktopMenuBridge onNavigate={navigate} />
       </AppShell>
     </Providers>
   );

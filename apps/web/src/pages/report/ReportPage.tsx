@@ -17,7 +17,6 @@ import { ConfirmDialog } from '../../components/ui/Modal';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { useAnalysis } from '../../lib/analysis';
 import { XLSX_MIME } from '../../lib/excel';
-import { downloadBlob, downloadText } from '../../lib/files';
 import { buildTaskCsv } from '../../lib/report/csvReport';
 import { buildExcelReport } from '../../lib/report/excelReport';
 import { buildPdfReport, CHART_META } from '../../lib/report/pdfReport';
@@ -29,6 +28,7 @@ import {
   type ReportData,
   type ReportSection,
 } from '../../lib/report/reportData';
+import { getPlatform } from '../../platform';
 import { createChartRegistry } from '../../state/chartImages';
 import type { Navigate } from '../../state/navigation';
 import { useProjects } from '../../state/ProjectStore';
@@ -37,10 +37,10 @@ import { PrintCharts } from './PrintCharts';
 
 type ExportKind = 'pdf' | 'excel' | 'csv';
 
-const EXPORTS: Record<ExportKind, { label: string; extension: string }> = {
-  pdf: { label: 'PDF', extension: 'pdf' },
-  excel: { label: 'Excel', extension: 'xlsx' },
-  csv: { label: 'CSV', extension: 'csv' },
+const EXPORTS: Record<ExportKind, { label: string; extension: string; mimeType: string }> = {
+  pdf: { label: 'PDF', extension: 'pdf', mimeType: 'application/pdf' },
+  excel: { label: 'Excel', extension: 'xlsx', mimeType: XLSX_MIME },
+  csv: { label: 'CSV', extension: 'csv', mimeType: 'text/csv;charset=utf-8' },
 };
 
 export function ReportPage({ onNavigate }: { onNavigate: Navigate }) {
@@ -83,20 +83,25 @@ function Report({ document }: { document: ProjectDocument }) {
     const name = reportFileName(project.name, project.statusDate, EXPORTS[kind].extension);
     try {
       const report = buildReportData(document, new Date());
-      if (kind === 'pdf') {
-        const pdf = await buildPdfReport(report, sections, registry.getAll());
-        downloadBlob(new Blob([pdf], { type: 'application/pdf' }), name);
-      } else if (kind === 'excel') {
-        const xlsx = await buildExcelReport(report, sections);
-        downloadBlob(new Blob([xlsx], { type: XLSX_MIME }), name);
-      } else {
-        downloadText(buildTaskCsv(report), name, 'text/csv;charset=utf-8');
-      }
-      toast({
-        tone: 'success',
-        title: `${EXPORTS[kind].label} report downloaded`,
-        description: name,
+      const data =
+        kind === 'pdf'
+          ? new Uint8Array(await buildPdfReport(report, sections, registry.getAll()))
+          : kind === 'excel'
+            ? new Uint8Array(await buildExcelReport(report, sections))
+            : buildTaskCsv(report);
+      const result = await getPlatform().saveFile({
+        kind: EXPORTS[kind].extension as 'pdf' | 'xlsx' | 'csv',
+        name,
+        data,
+        mimeType: EXPORTS[kind].mimeType,
       });
+      if (result.saved) {
+        toast({
+          tone: 'success',
+          title: `${EXPORTS[kind].label} report ${getPlatform().kind === 'desktop' ? 'saved' : 'downloaded'}`,
+          description: result.fileName ?? name,
+        });
+      }
     } catch {
       toast({
         tone: 'error',

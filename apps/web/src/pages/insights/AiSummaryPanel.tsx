@@ -13,14 +13,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
-import {
-  type AiFailure,
-  aiProxyUrl,
-  FAILURE_DETAIL,
-  FAILURE_REASON,
-  requestAiSummary,
-} from '../../lib/aiClient';
+import { type AiFailure, FAILURE_DETAIL, FAILURE_REASON } from '../../lib/aiClient';
 import { nowIso } from '../../lib/ids';
+import { getPlatform } from '../../platform';
 import { useProjects } from '../../state/ProjectStore';
 
 interface AiSummaryPanelProps {
@@ -66,10 +61,8 @@ export function AiSummaryPanel({ document, metrics, taskMetrics, anomalies }: Ai
     pending.current = controller;
     setPhase({ name: 'loading' });
 
-    const url = aiProxyUrl();
-    const result = url
-      ? await requestAiSummary(url, request, { signal: controller.signal })
-      : ({ ok: false, reason: 'not-configured' } as const);
+    // Browser: AI proxy. Desktop: main process (FR-52). Never throws.
+    const result = await getPlatform().generateAiSummary(request, controller.signal);
     if (controller.signal.aborted || pending.current !== controller) return;
     pending.current = null;
 

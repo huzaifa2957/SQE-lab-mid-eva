@@ -3,7 +3,7 @@
 
 import { createApp } from './app';
 import { loadConfig } from './config';
-import { createGeminiGenerator } from './gemini';
+import { createGeminiGenerator } from '@evm/platform/ai';
 import { createLogger } from './logger';
 
 export function createVercelApp() {

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@evm/core": "*",
-    "@google/genai": "^2.32.0",
+    "@evm/platform": "*",
     "cors": "^2.8.6",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.2",

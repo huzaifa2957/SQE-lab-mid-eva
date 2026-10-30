@@ -3,7 +3,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ConfigError, loadConfig } from '../src/config';
 import { createLogger } from '../src/logger';
-import { buildUserPrompt, RESPONSE_JSON_SCHEMA, SYSTEM_INSTRUCTION } from '../src/prompts';
+import { buildUserPrompt, RESPONSE_JSON_SCHEMA, SYSTEM_INSTRUCTION } from '@evm/platform/ai';
 import { validBody } from './fixtures';
 
 const generateContent = vi.fn();
@@ -93,7 +93,7 @@ describe('prompt design (SR-08)', () => {
 
 describe('Gemini adapter', () => {
   it('PT-24 calls the SDK with the configured model, system instruction, JSON schema and abort signal', async () => {
-    const { createGeminiGenerator } = await import('../src/gemini');
+    const { createGeminiGenerator } = await import('@evm/platform/ai');
     generateContent.mockResolvedValue({ text: '{"ok":true}' });
     const generate = createGeminiGenerator({ apiKey: 'k', model: 'some-model' });
     const signal = new AbortController().signal;

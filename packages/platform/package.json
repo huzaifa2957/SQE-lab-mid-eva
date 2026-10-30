@@ -1,0 +1,20 @@
+{
+  "name": "@evm/platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Platform layer shared by the AI proxy, the desktop app and the web app: AI prompt/validation and the desktop bridge contract.",
+  "exports": {
+    "./ai": "./src/ai/index.ts",
+    "./bridge": "./src/bridge.ts",
+    "./channels": "./src/channels.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@evm/core": "*",
+    "@google/genai": "^2.32.0",
+    "zod": "^4.6.7"
+  }
+}

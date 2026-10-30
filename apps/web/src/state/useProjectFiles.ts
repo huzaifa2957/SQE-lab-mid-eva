@@ -1,4 +1,5 @@
-// FR-08: save / open .evm.json project files. Opening validates with the core schemas first.
+// FR-08 / FR-51: save / open .evm.json project files — downloads and <input type=file> in the
+// browser, native dialogs on desktop. Opening validates with the core schemas first.
 
 import {
   parseProjectFile,
@@ -9,7 +10,8 @@ import {
   validateProjectFileMeta,
 } from '@evm/core';
 import { useCallback, useState } from 'react';
-import { downloadText, errorMessage, readFileText } from '../lib/files';
+import { errorMessage, readFileText } from '../lib/files';
+import { getPlatform } from '../platform';
 import { useProjects } from './ProjectStore';
 import { useToast } from './ToastProvider';
 
@@ -25,11 +27,15 @@ export function useProjectFiles() {
   const [pendingReplace, setPendingReplace] = useState<ProjectDocument | null>(null);
 
   const saveFile = useCallback(
-    (document: ProjectDocument) => {
+    async (document: ProjectDocument) => {
       try {
-        const name = projectFileName(document.project.name);
-        downloadText(serializeProjectFile(document), name, 'application/json');
-        toast({ tone: 'success', title: `Saved ${name}` });
+        const result = await getPlatform().saveFile({
+          kind: 'project',
+          name: projectFileName(document.project.name),
+          data: serializeProjectFile(document),
+          mimeType: 'application/json',
+        });
+        if (result.saved) toast({ tone: 'success', title: `Saved ${result.fileName}` });
       } catch (error) {
         toast({
           tone: 'error',
@@ -55,15 +61,20 @@ export function useProjectFiles() {
     [documents, putDocument, toast],
   );
 
-  const openFile = useCallback(
-    async (file: File) => {
-      const check = validateProjectFileMeta({ name: file.name, size: file.size, type: file.type });
+  /** Validates and opens project file text (from a File in the browser or a native dialog). */
+  const openText = useCallback(
+    async (file: { name: string; size: number; type?: string }, read: () => Promise<string>) => {
+      const check = validateProjectFileMeta({
+        name: file.name,
+        size: file.size,
+        type: file.type ?? '',
+      });
       if (!check.valid) {
         setProblem({ fileName: file.name, errors: check.errors });
         return;
       }
       try {
-        const result = parseProjectFile(await readFileText(file));
+        const result = parseProjectFile(await read());
         if (!result.document) {
           setProblem({ fileName: file.name, errors: result.errors });
           toast({
@@ -89,6 +100,24 @@ export function useProjectFiles() {
     [accept, documents, toast],
   );
 
+  const openFile = useCallback(
+    (file: File) => openText(file, () => readFileText(file)),
+    [openText],
+  );
+
+  /** Desktop: native Open dialog (FR-51). Returns false where the platform has none. */
+  const openFromDialog = useCallback(async (): Promise<boolean> => {
+    const open = getPlatform().openProjectFile;
+    if (!open) return false;
+    try {
+      const picked = await open();
+      if (picked) await openText(picked, async () => picked.text);
+    } catch {
+      toast({ tone: 'error', title: 'Could not open the project file' });
+    }
+    return true;
+  }, [openText, toast]);
+
   const confirmReplace = useCallback(() => {
     if (pendingReplace) accept(pendingReplace);
     setPendingReplace(null);
@@ -97,6 +126,7 @@ export function useProjectFiles() {
   return {
     saveFile,
     openFile,
+    openFromDialog,
     problem,
     clearProblem: () => setProblem(null),
     pendingReplace,

@@ -14,7 +14,7 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card, FeaturePanel } from '../../components/ui/Card';
@@ -80,6 +80,20 @@ export function ProjectsPage({
     });
   };
 
+  // Desktop: native Open dialog; browser: the hidden file input.
+  const openProjectFile = async () => {
+    if (!(await files.openFromDialog())) fileInput.current?.click();
+  };
+
+  // The desktop File → Open project menu arrives as #/projects?open=<n>.
+  const openRequest = params.open;
+  const handledOpen = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!openRequest || handledOpen.current === openRequest) return;
+    handledOpen.current = openRequest;
+    void files.openFromDialog();
+  }, [openRequest, files]);
+
   const open = (document: ProjectDocument) => {
     store.selectProject(document.project.id);
     onNavigate('data');
@@ -92,11 +106,7 @@ export function ProjectsPage({
         description="Create a project, open a saved project file or try the sample project."
         actions={
           <>
-            <Button
-              variant="secondary"
-              icon={FolderOpen}
-              onClick={() => fileInput.current?.click()}
-            >
+            <Button variant="secondary" icon={FolderOpen} onClick={() => void openProjectFile()}>
               Open project file
             </Button>
             <Button variant="secondary" icon={Sparkles} onClick={loadSample}>

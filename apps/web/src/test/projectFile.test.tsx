@@ -11,16 +11,16 @@ const jsonFile = (text: string, name = 'project.evm.json') =>
 
 describe('project files (FR-08)', () => {
   it('CT-PF-01 "Save file" downloads <project>.evm.json that core can read back', async () => {
-    const download = vi.spyOn(files, 'downloadText');
+    const download = vi.spyOn(files, 'downloadBlob');
     const { user } = await renderApp({ page: 'projects' });
     const card = within(screen.getByRole('region', { name: 'Office Fit-out' }));
     await user.click(card.getByRole('button', { name: 'Save file' }));
 
-    expect(download).toHaveBeenCalledTimes(1);
-    const [text, fileName, type] = download.mock.calls[0]!;
+    await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
+    const [blob, fileName] = download.mock.calls[0]!;
     expect(fileName).toBe('Office_Fit_out.evm.json');
-    expect(type).toBe('application/json');
-    const parsed = parseProjectFile(text);
+    expect(blob.type).toBe('application/json');
+    const parsed = parseProjectFile(await files.readFileText(blob));
     expect(parsed.valid).toBe(true);
     expect(parsed.document!.tasks).toHaveLength(2);
     expect(await screen.findByText('Saved Office_Fit_out.evm.json')).toBeInTheDocument();

@@ -21,7 +21,8 @@ import { Table, TBody, Td, Th, THead, Tr } from '../../components/ui/Table';
 import { useAnomalies } from '../../lib/analysis';
 import { buildTasksTemplateCsv } from '../../lib/csvTemplate';
 import { buildTemplateWorkbook, XLSX_MIME } from '../../lib/excel';
-import { downloadBlob, downloadText, errorMessage } from '../../lib/files';
+import { errorMessage } from '../../lib/files';
+import { getPlatform } from '../../platform';
 import type { Navigate, PageParams } from '../../state/navigation';
 import { useProjects } from '../../state/ProjectStore';
 import { useToast } from '../../state/ToastProvider';
@@ -131,7 +132,12 @@ function DataWorkspace({
 
   const downloadXlsxTemplate = async () => {
     try {
-      downloadBlob(new Blob([await buildTemplateWorkbook()], { type: XLSX_MIME }), 'template.xlsx');
+      await getPlatform().saveFile({
+        kind: 'xlsx',
+        name: 'template.xlsx',
+        data: new Uint8Array(await buildTemplateWorkbook()),
+        mimeType: XLSX_MIME,
+      });
     } catch (error) {
       toast({
         tone: 'error',
@@ -141,9 +147,14 @@ function DataWorkspace({
     }
   };
 
-  const downloadCsvTemplate = () => {
+  const downloadCsvTemplate = async () => {
     try {
-      downloadText(buildTasksTemplateCsv(), 'tasks_template.csv', 'text/csv');
+      await getPlatform().saveFile({
+        kind: 'csv',
+        name: 'tasks_template.csv',
+        data: buildTasksTemplateCsv(),
+        mimeType: 'text/csv',
+      });
     } catch (error) {
       toast({
         tone: 'error',
@@ -180,10 +191,10 @@ function DataWorkspace({
             >
               Excel template
             </Button>
-            <Button variant="secondary" icon={Download} onClick={downloadCsvTemplate}>
+            <Button variant="secondary" icon={Download} onClick={() => void downloadCsvTemplate()}>
               CSV template
             </Button>
-            <Button variant="secondary" icon={Save} onClick={() => files.saveFile(document)}>
+            <Button variant="secondary" icon={Save} onClick={() => void files.saveFile(document)}>
               Save project file
             </Button>
           </div>

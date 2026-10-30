@@ -1,15 +1,12 @@
 // Client for the AI proxy (FR-32, FR-33, RL-05). Never throws: every failure becomes a
 // reason, and the caller falls back to the offline rule-based summary (FR-34).
 
-import { type AiSummary, type SummaryRequest, SummaryResponseSchema } from '@evm/core';
+import { type SummaryRequest, SummaryResponseSchema } from '@evm/core';
+import type { AiFailure, AiResult } from '@evm/platform/bridge';
 
 export const AI_TIMEOUT_MS = 20_000;
 
-export type AiFailure =
-  'not-configured' | 'timeout' | 'rate-limited' | 'server' | 'network' | 'invalid' | 'cancelled';
-
-export type AiResult =
-  { ok: true; summary: AiSummary; model?: string } | { ok: false; reason: AiFailure };
+export type { AiFailure, AiResult } from '@evm/platform/bridge';
 
 /** Short reason stored with an offline summary (FR-34). */
 export const FAILURE_REASON: Record<AiFailure, string> = {

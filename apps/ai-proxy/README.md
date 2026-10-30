@@ -30,22 +30,20 @@ The web app treats every non-200 answer (and network errors) as "use the offline
   sent to clients (tested in `tests/app.test.ts`, PT-14).
 - **SR-02** Helmet headers, CORS allow-list + origin check, 20 KB body limit, Zod validation,
   `express-rate-limit` (10/min/IP), 20 s timeout with abort, generic error messages.
-- **SR-08** `src/prompts.ts`: a fixed system instruction to treat the data as data; only
+- **SR-08** `packages/platform/src/ai/prompts.ts` (shared with the desktop app): a fixed system instruction to treat the data as data; only
   aggregated metrics, insights and anomalies are sent as JSON (task names truncated to 60
   characters; `<` escaped so text cannot close the data block); a JSON response schema; the
   answer is validated with `AiSummarySchema` before it is returned.
 
 ## Files
 
-| File             | Purpose                                                       |
-| ---------------- | ------------------------------------------------------------- |
-| `src/config.ts`  | Reads and validates env vars; clear startup errors            |
-| `src/prompts.ts` | System instruction, user prompt, response JSON schema         |
-| `src/gemini.ts`  | `@google/genai` call                                          |
-| `src/handler.ts` | Framework-free request handling (validation, timeout, output) |
-| `src/app.ts`     | Express app with the SR-02 middleware                         |
-| `src/server.ts`  | Local / Replit entry (`npm run dev` / `npm run start`)        |
-| `api/*.ts`       | Vercel serverless functions using the same app                |
+| File             | Purpose                                                                                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/config.ts`  | Reads and validates env vars; clear startup errors                                                                                                            |
+| `src/handler.ts` | Request validation and HTTP status codes; the model call, timeout and answer validation come from `@evm/platform/ai` (prompt, Gemini call, `generateSummary`) |
+| `src/app.ts`     | Express app with the SR-02 middleware                                                                                                                         |
+| `src/server.ts`  | Local / Replit entry (`npm run dev` / `npm run start`)                                                                                                        |
+| `api/*.ts`       | Vercel serverless functions using the same app                                                                                                                |
 
 ## Vercel notes
 
